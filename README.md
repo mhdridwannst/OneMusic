@@ -9,7 +9,6 @@ Pemutar musik web bergaya Spotify, dibangun dengan Next.js, Supabase, dan Framer
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase">
   <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
-  <img src="https://img.shields.io/badge/License-MIT-1DB954?style=flat-square" alt="License">
 </p>
 
 [Demo](https://next-app-music.vercel.app/) · [Laporkan Issue](https://github.com/wannn-sion95/OneMusic/issues)
@@ -28,7 +27,7 @@ OneMusic adalah aplikasi pemutar musik berbasis web dengan tampilan modern dan r
 
 ## Fitur
 
-- **Cloud streaming:** data lagu dan audio dikelola lewat Supabase (PostgreSQL).
+- **Cloud streaming:** data lagu dikelola lewat Supabase (PostgreSQL) dan diambil melalui endpoint `GET /api/songs`.
 - **Lirik tersinkronisasi:** mendukung format `.lrc`, baris aktif ditandai dan layar bergulir otomatis.
 - **UI glassmorphism:** tema gelap yang bersih, dibuat dengan Tailwind CSS.
 - **Animasi:** transisi mulus antara cover art dan tampilan lirik dengan Framer Motion.
@@ -37,21 +36,58 @@ OneMusic adalah aplikasi pemutar musik berbasis web dengan tampilan modern dan r
 
 ## Tech Stack
 
-Next.js 16 · TypeScript · Supabase · Tailwind CSS · Framer Motion · Vercel
+Next.js 16 · React 19 · TypeScript · Supabase · Tailwind CSS 4 · Framer Motion · Vercel
 
 ## Menjalankan Secara Lokal
 
-Butuh Node.js v18+ dan npm, yarn, atau pnpm.
+Butuh Node.js v18+ dan sebuah project [Supabase](https://supabase.com/).
+
+**1. Clone dan install**
 
 ```bash
 git clone https://github.com/wannn-sion95/OneMusic.git
 cd OneMusic
 npm install
+```
+
+**2. Siapkan database**
+
+Buka SQL Editor di dashboard Supabase, lalu jalankan:
+
+```sql
+create table songs (
+  id     bigint generated always as identity primary key,
+  title  text not null,
+  artist text not null,
+  cover  text not null,  -- URL atau path gambar cover
+  src    text not null,  -- URL file audio
+  lrc    text            -- URL file .lrc (opsional)
+);
+
+alter table songs enable row level security;
+
+create policy "Public read access"
+  on songs for select
+  using (true);
+```
+
+Isi tabel `songs` dengan lagu Anda. Kolom `src` dan `lrc` berisi URL file, misalnya dari Supabase Storage.
+
+**3. Atur environment variable**
+
+Buat file `.env.local` di root proyek:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Nilainya ada di dashboard Supabase pada **Project Settings → API**.
+
+**4. Jalankan**
+
+```bash
 npm run dev
 ```
 
 Buka [http://localhost:3000](http://localhost:3000).
-
-## Lisensi
-
-MIT
