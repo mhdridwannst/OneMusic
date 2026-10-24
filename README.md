@@ -2,7 +2,7 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:000000,100:1DB954&height=200&section=header&text=OneMusic&fontSize=60&fontColor=ffffff&fontAlignY=38&desc=Your%20Ultimate%20Music%20Streaming%20Experience&descAlignY=62&descSize=20&descColor=1DB954" width="100%" alt="OneMusic Banner"/>
 
-Pemutar musik web bergaya Spotify, dibangun dengan Next.js, Supabase, dan Framer Motion.
+Web music desain ala Spotify, dibangun dengan Next.js, Supabase, dan Framer Motion.
 
 <p>
   <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js">
