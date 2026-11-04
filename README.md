@@ -11,7 +11,7 @@ Web music desain ala Spotify, dibangun dengan Next.js, Supabase, dan Framer Moti
   <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
 </p>
 
-[Demo](https://next-app-music.vercel.app/) · [Laporkan Issue](https://github.com/wannn-sion95/OneMusic/issues)
+[Demo](https://next-app-music.vercel.app/) · [Report Issue](https://github.com/wannn-sion95/OneMusic/issues)
 
 </div>
 
