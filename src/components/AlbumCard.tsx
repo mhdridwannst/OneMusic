@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
+import React, { useState } from "react";
 import { Song } from "@/types";
 import { motion } from "framer-motion";
 
@@ -20,6 +20,8 @@ export default function AlbumCard({
   onPlay,
   onToggleLike,
 }: AlbumCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <motion.div
       onClick={onPlay}
@@ -35,15 +37,25 @@ export default function AlbumCard({
       }`}
     >
       {/* Cover Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-md bg-black/40">
-        <img
-          src={data.cover}
-          alt={data.title}
-          loading="lazy"
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-            isCurrentSong && isPlaying ? "brightness-90" : ""
-          }`}
-        />
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-md bg-[#16161a]">
+        {!imageError ? (
+          <img
+            src={data.cover}
+            alt={data.title}
+            loading="lazy"
+            onError={() => setImageError(true)}
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+              isCurrentSong && isPlaying ? "brightness-90" : ""
+            }`}
+          />
+        ) : (
+          <div className="w-full h-full bg-linear-to-br from-neutral-800 to-neutral-900 flex flex-col items-center justify-center p-3 text-center">
+            <i className="ri-disc-line text-4xl text-[#22c527] mb-1 opacity-70"></i>
+            <span className="text-[10px] text-white/50 font-bold truncate max-w-full">
+              {data.title}
+            </span>
+          </div>
+        )}
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Song } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,17 +44,43 @@ export default function MiniPlayer({
   onOpenQueue,
 }: MiniPlayerProps) {
   const [showVolumePopup, setShowVolumePopup] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const isScrubbingRef = useRef(false);
 
   if (!currentSong) return null;
 
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
 
-  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+  // Touch & Mouse Scrubbing Handler
+  const handleSeekFromClientX = (clientX: number) => {
+    if (!progressBarRef.current || duration <= 0) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const newProgress = (clickX / rect.width) * duration;
     onSeek(newProgress);
+  };
+
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    handleSeekFromClientX(e.clientX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    isScrubbingRef.current = true;
+    if (e.touches[0]) handleSeekFromClientX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isScrubbingRef.current) return;
+    e.stopPropagation();
+    if (e.touches[0]) handleSeekFromClientX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    isScrubbingRef.current = false;
   };
 
   return (
@@ -70,17 +96,21 @@ export default function MiniPlayer({
           onClick={onExpand}
           className="relative bg-[#151518]/90 backdrop-blur-2xl border border-white/10 rounded-2xl md:rounded-3xl p-2.5 md:p-3.5 flex items-center justify-between shadow-2xl cursor-pointer hover:bg-[#1c1c22]/95 hover:border-white/20 transition-all group overflow-hidden"
         >
-          {/* INTERACTIVE PROGRESS BAR DI ATAS (SEEKABLE) */}
+          {/* INTERACTIVE PROGRESS BAR DI ATAS (SEEKABLE & TOUCH DRAGGABLE) */}
           <div
+            ref={progressBarRef}
             onClick={handleProgressBarClick}
-            className="absolute top-0 left-0 right-0 h-1.5 hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar"
-            title="Klik untuk geser durasi"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="absolute top-0 left-0 right-0 h-2 md:h-1.5 md:hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar touch-none"
+            title="Geser atau sentuh untuk mengatur durasi"
           >
             <div
               className="h-full bg-linear-to-r from-[#22c527] to-emerald-400 relative"
               style={{ width: `${progressPercent}%` }}
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white opacity-0 group-hover/bar:opacity-100 shadow-md"></div>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white opacity-90 md:opacity-0 md:group-hover/bar:opacity-100 shadow-md"></div>
             </div>
           </div>
 
@@ -94,21 +124,28 @@ export default function MiniPlayer({
 
           {/* SISI KIRI: Info Lagu & Cover */}
           <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0 pr-2">
-            {/* Cover Album dengan efek Vinyl */}
+            {/* Cover Album */}
             <div className="relative shrink-0">
               <div
-                className={`w-11 h-11 md:w-13 md:h-13 rounded-xl overflow-hidden border border-white/15 shadow-lg ${
+                className={`w-11 h-11 md:w-13 md:h-13 rounded-xl overflow-hidden border border-white/15 shadow-lg bg-[#18181b] ${
                   isPlaying ? "scale-105" : "scale-100"
                 } transition-transform duration-300`}
               >
-                <img
-                  src={currentSong.cover}
-                  alt={currentSong.title}
-                  className="w-full h-full object-cover"
-                />
+                {!imageError ? (
+                  <img
+                    src={currentSong.cover}
+                    alt={currentSong.title}
+                    onError={() => setImageError(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-neutral-800 text-[#22c527]">
+                    <i className="ri-disc-line text-2xl"></i>
+                  </div>
+                )}
               </div>
 
-              {/* Little equalizer badge on mobile */}
+              {/* Little equalizer badge */}
               {isPlaying && (
                 <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22c527] rounded-full flex items-center justify-center border-2 border-[#151518]">
                   <span className="w-1 h-1 bg-black rounded-full animate-ping"></span>

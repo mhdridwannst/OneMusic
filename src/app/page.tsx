@@ -146,7 +146,7 @@ export default function Home() {
       />
       <Toast message={toastMsg} isVisible={showToast} />
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-36 px-4 md:px-8 z-10">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-44 px-4 md:px-8 z-10">
         <div className="max-w-7xl mx-auto">
           {/* Hero Carousel hanya tampil ketika tidak sedang search & di tab Semua Lagu */}
           {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (

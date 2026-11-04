@@ -18,9 +18,35 @@ export function useAudioPlayer(songs: Song[]) {
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
 
   // Ref untuk menyimpan Playlist/Antrian yang sedang aktif
   const playlistRef = useRef<Song[]>(songs);
+
+  // --- SAFE PLAY HELPER (Mencegah AbortError saat klik cepat) ---
+  const safePlay = useCallback((audio: HTMLAudioElement) => {
+    try {
+      const promise = audio.play();
+      if (promise !== undefined) {
+        playPromiseRef.current = promise;
+        promise
+          .then(() => {
+            setIsPlaying(true);
+            playPromiseRef.current = null;
+          })
+          .catch((e: unknown) => {
+            playPromiseRef.current = null;
+            if (e instanceof Error && e.name === "AbortError") {
+              return;
+            }
+            console.warn("Audio playback aborted or unallowed:", e);
+            setIsPlaying(false);
+          });
+      }
+    } catch (e) {
+      console.warn("Audio play exception:", e);
+    }
+  }, []);
 
   // --- LOGIC FUNCTIONS ---
   const setPlaylist = useCallback((newPlaylist: Song[]) => {
@@ -45,34 +71,34 @@ export function useAudioPlayer(songs: Song[]) {
 
   const playSong = useCallback(
     (song: Song) => {
-      if (!audioRef.current) return;
+      const audio = audioRef.current;
+      if (!audio) return;
+
       if (currentSong?.id !== song.id) {
-        audioRef.current.src = song.src;
-        audioRef.current.playbackRate = playbackRate;
+        audio.pause();
+        audio.src = song.src;
+        audio.playbackRate = playbackRate;
         setCurrentSong(song);
+        setProgress(0);
         localStorage.setItem("lastSongId", song.id.toString());
       }
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => console.error("Playback error:", e));
+      safePlay(audio);
     },
-    [currentSong, playbackRate]
+    [currentSong, playbackRate, safePlay]
   );
 
   const togglePlay = useCallback(() => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.playbackRate = playbackRate;
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => console.error("Playback error:", e));
+      audio.playbackRate = playbackRate;
+      safePlay(audio);
     }
-  }, [isPlaying, playbackRate]);
+  }, [isPlaying, playbackRate, safePlay]);
 
   // LOGIC NEXT (DINAMIS SESUAI PLAYLIST AKTIF)
   const handleNext = useCallback(() => {
@@ -222,7 +248,7 @@ export function useAudioPlayer(songs: Song[]) {
     const onEnded = () => {
       if (repeatMode === "one") {
         audio.currentTime = 0;
-        audio.play();
+        safePlay(audio);
       } else if (repeatMode === "all" || isShuffle) {
         handleNext();
       } else {
@@ -230,14 +256,21 @@ export function useAudioPlayer(songs: Song[]) {
       }
     };
 
+    const onError = (e: Event) => {
+      console.warn("Audio loading or decoding error:", e);
+      setIsPlaying(false);
+    };
+
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("ended", onEnded);
+    audio.addEventListener("error", onError);
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("error", onError);
     };
-  }, [handleNext, repeatMode, isShuffle]);
+  }, [handleNext, repeatMode, isShuffle, safePlay]);
 
   // 3. MediaSession API (Lockscreen & OS Multimedia Controls)
   useEffect(() => {
