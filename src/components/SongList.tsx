@@ -4,17 +4,35 @@ import AlbumCard from "@/components/AlbumCard";
 
 interface SongListProps {
   songs: Song[];
+  currentSong: Song | null;
+  isPlaying: boolean;
+  likedSongs: number[];
   onPlay: (song: Song) => void;
+  onToggleLike: (song: Song) => void;
 }
 
-export default function SongList({ songs, onPlay }: SongListProps) {
+export default function SongList({
+  songs,
+  currentSong,
+  isPlaying,
+  likedSongs,
+  onPlay,
+  onToggleLike,
+}: SongListProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 md:gap-4">
       {songs.map((song) => (
-        <AlbumCard 
-          key={song.id} 
-          data={song} 
-          onClick={() => onPlay(song)} 
+        <AlbumCard
+          key={song.id}
+          data={song}
+          isCurrentSong={currentSong?.id === song.id}
+          isPlaying={isPlaying}
+          isLiked={likedSongs.includes(song.id)}
+          onPlay={() => onPlay(song)}
+          onToggleLike={(e) => {
+            e.stopPropagation();
+            onToggleLike(song);
+          }}
         />
       ))}
     </div>

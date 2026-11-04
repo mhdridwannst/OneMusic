@@ -1,52 +1,137 @@
 /* eslint-disable @next/next/no-img-element */
-// src/components/AlbumCard.tsx
 import React from "react";
 import { Song } from "@/types";
-import { motion } from "framer-motion"; // <-- Import ini
+import { motion } from "framer-motion";
 
 interface AlbumCardProps {
   data: Song;
-  onClick: () => void;
+  isCurrentSong: boolean;
+  isPlaying: boolean;
+  isLiked: boolean;
+  onPlay: () => void;
+  onToggleLike: (e: React.MouseEvent) => void;
 }
 
-export default function AlbumCard({ data, onClick }: AlbumCardProps) {
+export default function AlbumCard({
+  data,
+  isCurrentSong,
+  isPlaying,
+  isLiked,
+  onPlay,
+  onToggleLike,
+}: AlbumCardProps) {
   return (
     <motion.div
-      onClick={onClick}
-      // ANIMASI DISINI:
-      whileHover={{ y: -5, scale: 1.02 }} // Naik dikit & membesar pas hover
-      whileTap={{ scale: 0.95 }} // Mengecil pas dipencet (efek tactile)
-      initial={{ opacity: 0, y: 20 }} // Muncul dari bawah
-      animate={{ opacity: 1, y: 0 }} // Ke posisi normal
-      transition={{ type: "spring", stiffness: 300, damping: 20 }} // Efek pegas
-      className="group relative flex flex-col gap-3 p-3 rounded-2xl cursor-pointer"
+      onClick={onPlay}
+      whileHover={{ y: -6, scale: 1.02 }}
+      whileTap={{ scale: 0.96 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+      className={`group relative flex flex-col gap-2.5 p-3 rounded-2xl cursor-pointer transition-colors duration-300 ${
+        isCurrentSong
+          ? "bg-white/8 border border-[#22c527]/40 shadow-[0_4px_25px_rgba(34,197,39,0.15)]"
+          : "bg-white/3 hover:bg-white/7 border border-white/5 hover:border-white/10"
+      }`}
     >
-      {/* Background Glass (Muncul pas hover) */}
-      <div className="absolute inset-0 bg-white/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      {/* Cover Image */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-lg">
+      {/* Cover Image Container */}
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-md bg-black/40">
         <img
           src={data.cover}
           alt={data.title}
-          className="w-full h-full object-cover"
+          loading="lazy"
+          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+            isCurrentSong && isPlaying ? "brightness-90" : ""
+          }`}
         />
-        {/* Play Icon Overlay */}
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]">
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Quick Like Heart Button (Top Right) */}
+        <button
+          onClick={onToggleLike}
+          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 z-10 ${
+            isLiked
+              ? "bg-black/60 text-[#22c527] scale-100 opacity-100"
+              : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 hover:scale-110"
+          }`}
+          title={isLiked ? "Hapus dari Favorit" : "Tambah ke Favorit"}
+        >
+          <i
+            className={`${
+              isLiked ? "ri-heart-3-fill text-[#22c527]" : "ri-heart-3-line"
+            } text-base`}
+          ></i>
+        </button>
+
+        {/* Play / Pause Overlay Icon (Center) */}
+        <div
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+            isCurrentSong
+              ? "opacity-100 bg-black/30 backdrop-blur-[1px]"
+              : "opacity-0 group-hover:opacity-100 bg-black/35 backdrop-blur-[1px]"
+          }`}
+        >
           <motion.div
-            initial={{ scale: 0 }}
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-xl transition-all ${
+              isCurrentSong
+                ? "bg-[#22c527] text-black shadow-[0_0_20px_rgba(34,197,39,0.5)]"
+                : "bg-white text-black hover:bg-[#22c527]"
+            }`}
           >
-            <i className="ri-play-fill text-xl"></i>
+            {isCurrentSong && isPlaying ? (
+              <i className="ri-pause-fill text-2xl"></i>
+            ) : (
+              <i className="ri-play-fill text-2xl ml-0.5"></i>
+            )}
           </motion.div>
         </div>
+
+        {/* Live Audio Equalizer Bars (Bottom Left when Playing) */}
+        {isCurrentSong && (
+          <div className="absolute bottom-2.5 left-2.5 px-2 py-1 rounded-full bg-black/75 backdrop-blur-md flex items-center gap-1 border border-white/10 z-10">
+            <span
+              className={`w-1 bg-[#22c527] rounded-full ${
+                isPlaying ? "animate-music-bar-1 h-3" : "h-1.5"
+              }`}
+            ></span>
+            <span
+              className={`w-1 bg-[#22c527] rounded-full ${
+                isPlaying ? "animate-music-bar-2 h-4" : "h-2.5"
+              }`}
+            ></span>
+            <span
+              className={`w-1 bg-[#22c527] rounded-full ${
+                isPlaying ? "animate-music-bar-3 h-2" : "h-1"
+              }`}
+            ></span>
+          </div>
+        )}
       </div>
 
-      {/* Info */}
-      <div className="relative z-10">
-        <h4 className="font-bold text-white truncate text-sm">{data.title}</h4>
-        <p className="text-xs text-white/50 truncate">{data.artist}</p>
+      {/* Info Text */}
+      <div className="flex flex-col gap-0.5">
+        <h4
+          className={`font-bold text-xs md:text-sm truncate transition-colors ${
+            isCurrentSong ? "text-[#22c527]" : "text-white group-hover:text-[#22c527]"
+          }`}
+          title={data.title}
+        >
+          {data.title}
+        </h4>
+        <div className="flex items-center justify-between text-[11px] text-white/50">
+          <p className="truncate max-w-[70%]" title={data.artist}>
+            {data.artist}
+          </p>
+          {data.genre && (
+            <span className="text-[9px] uppercase tracking-wider text-white/35 font-medium px-1.5 py-0.2 bg-white/5 rounded">
+              {data.genre.split("/")[0].trim()}
+            </span>
+          )}
+        </div>
       </div>
     </motion.div>
   );

@@ -5,4 +5,6 @@ export interface Song {
   cover: string;
   src: string;
   lrc?: string; // Opsional karena gak semua lagu punya lirik
+  genre?: string;
+  album?: string;
 }

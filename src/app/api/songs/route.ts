@@ -1,18 +1,36 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase"; // Import client yang kita buat tadi
+import { supabase } from "@/lib/supabase";
+import { defaultSongs } from "@/data/defaultSongs";
 
 export async function GET() {
-  // 1. Query ke Database Supabase (Tabel 'songs')
-  const { data, error } = await supabase
-    .from("songs")
-    .select("*")
-    .order("id", { ascending: true }); // Urutkan sesuai ID
+  try {
+    // Beri batas waktu 2.5 detik untuk koneksi Supabase agar web app tidak stuck loading lama jika Supabase down/paused
+    const fetchSupabase = async () => {
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*")
+        .order("id", { ascending: true });
 
-  // 2. Error Handling (Kalau database down/salah)
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error || !data || data.length === 0) {
+        return null;
+      }
+      return data;
+    };
+
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 2500)
+    );
+
+    const result = await Promise.race([fetchSupabase(), timeoutPromise]);
+
+    if (result && result.length > 0) {
+      return NextResponse.json(result, { status: 200 });
+    }
+
+    // Fallback otomatis ke default curated songs (70 lagu dengan cover, lrc, genre lengkap)
+    return NextResponse.json(defaultSongs, { status: 200 });
+  } catch (error) {
+    console.warn("Supabase unreachable, using local fallback songs:", error);
+    return NextResponse.json(defaultSongs, { status: 200 });
   }
-
-  // 3. Kirim Data Asli ke Frontend
-  return NextResponse.json(data, { status: 200 });
 }

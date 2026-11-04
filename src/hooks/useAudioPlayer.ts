@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Song } from "@/types";
 
@@ -12,6 +11,7 @@ export function useAudioPlayer(songs: Song[]) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [likedSongs, setLikedSongs] = useState<number[]>([]);
+  const [playbackRate, setPlaybackRateState] = useState(1);
 
   // State Shuffle & Repeat
   const [isShuffle, setIsShuffle] = useState(false);
@@ -19,22 +19,27 @@ export function useAudioPlayer(songs: Song[]) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // NEW: Ref untuk menyimpan Playlist/Antrian yang sedang aktif
-  // Defaultnya berisi semua lagu ('songs')
+  // Ref untuk menyimpan Playlist/Antrian yang sedang aktif
   const playlistRef = useRef<Song[]>(songs);
 
   // --- LOGIC FUNCTIONS ---
-
-  // Fungsi untuk update playlist dari luar (tanpa re-render berlebih)
   const setPlaylist = useCallback((newPlaylist: Song[]) => {
     playlistRef.current = newPlaylist;
   }, []);
 
   const handleVolumeChange = useCallback((newVolume: number) => {
-    setVolume(newVolume);
+    const clamped = Math.max(0, Math.min(1, newVolume));
+    setVolume(clamped);
     if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-      localStorage.setItem("volume", newVolume.toString());
+      audioRef.current.volume = clamped;
+      localStorage.setItem("volume", clamped.toString());
+    }
+  }, []);
+
+  const setPlaybackRate = useCallback((rate: number) => {
+    setPlaybackRateState(rate);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = rate;
     }
   }, []);
 
@@ -43,6 +48,7 @@ export function useAudioPlayer(songs: Song[]) {
       if (!audioRef.current) return;
       if (currentSong?.id !== song.id) {
         audioRef.current.src = song.src;
+        audioRef.current.playbackRate = playbackRate;
         setCurrentSong(song);
         localStorage.setItem("lastSongId", song.id.toString());
       }
@@ -51,7 +57,7 @@ export function useAudioPlayer(songs: Song[]) {
         .then(() => setIsPlaying(true))
         .catch((e) => console.error("Playback error:", e));
     },
-    [currentSong]
+    [currentSong, playbackRate]
   );
 
   const togglePlay = useCallback(() => {
@@ -60,22 +66,22 @@ export function useAudioPlayer(songs: Song[]) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
-      setIsPlaying(true);
+      audioRef.current.playbackRate = playbackRate;
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => console.error("Playback error:", e));
     }
-  }, [isPlaying]);
+  }, [isPlaying, playbackRate]);
 
-  // LOGIC NEXT (DINAMIS SESUAI TAB)
+  // LOGIC NEXT (DINAMIS SESUAI PLAYLIST AKTIF)
   const handleNext = useCallback(() => {
     if (!currentSong) return;
 
-    // Gunakan playlist yang sedang aktif (Filtered / All)
     const currentList = playlistRef.current;
-
-    // Kalau list kosong (misal favorites kosong), stop.
     if (currentList.length === 0) return;
 
-    let nextIndex;
+    let nextIndex: number;
     if (isShuffle) {
       if (currentList.length === 1) {
         nextIndex = 0;
@@ -89,8 +95,6 @@ export function useAudioPlayer(songs: Song[]) {
         (s) => s.id === currentSong.id
       );
 
-      // Kalau lagu yang lagi main TIDAK ADA di list saat ini (misal lagi main lagu pop, tapi user pindah ke tab 'Rock'),
-      // maka lagu selanjutnya adalah lagu PERTAMA dari list 'Rock'.
       if (currentIndex === -1) {
         nextIndex = 0;
       } else {
@@ -99,7 +103,7 @@ export function useAudioPlayer(songs: Song[]) {
     }
 
     playSong(currentList[nextIndex]);
-  }, [currentSong, isShuffle, playSong]); // Hapus 'songs' dari dependency
+  }, [currentSong, isShuffle, playSong]);
 
   // LOGIC PREV (DINAMIS)
   const handlePrev = useCallback(() => {
@@ -112,10 +116,11 @@ export function useAudioPlayer(songs: Song[]) {
 
     if (audioRef.current && audioRef.current.currentTime > 3) {
       audioRef.current.currentTime = 0;
+      setProgress(0);
       return;
     }
 
-    let prevIndex;
+    let prevIndex: number;
     if (currentIndex === -1) {
       prevIndex = 0;
     } else {
@@ -127,8 +132,20 @@ export function useAudioPlayer(songs: Song[]) {
 
   const handleSeek = (time: number) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setProgress(time);
+      const clamped = Math.max(0, Math.min(audioRef.current.duration || time, time));
+      audioRef.current.currentTime = clamped;
+      setProgress(clamped);
+    }
+  };
+
+  const seekBy = (seconds: number) => {
+    if (audioRef.current) {
+      const newTime = Math.max(
+        0,
+        Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + seconds)
+      );
+      audioRef.current.currentTime = newTime;
+      setProgress(newTime);
     }
   };
 
@@ -166,12 +183,13 @@ export function useAudioPlayer(songs: Song[]) {
       }
 
       const savedLikes = localStorage.getItem("likedSongs");
-      if (savedLikes)
+      if (savedLikes) {
         try {
           setLikedSongs(JSON.parse(savedLikes));
         } catch (e) {
           console.error(e);
         }
+      }
 
       const lastSongId = localStorage.getItem("lastSongId");
       if (lastSongId) {
@@ -182,13 +200,14 @@ export function useAudioPlayer(songs: Song[]) {
         }
       }
     }, 0);
+
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [songs]); // Dependensi songs hanya untuk init
+  }, [songs]);
 
   // 2. Audio Listeners
   useEffect(() => {
@@ -220,19 +239,62 @@ export function useAudioPlayer(songs: Song[]) {
     };
   }, [handleNext, repeatMode, isShuffle]);
 
-  // 3. KEYBOARD SHORTCUTS
+  // 3. MediaSession API (Lockscreen & OS Multimedia Controls)
+  useEffect(() => {
+    if (typeof window === "undefined" || !("mediaSession" in navigator)) return;
+
+    if (currentSong) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: currentSong.genre || "OneMusic",
+        artwork: [
+          { src: currentSong.cover, sizes: "96x96", type: "image/jpeg" },
+          { src: currentSong.cover, sizes: "128x128", type: "image/jpeg" },
+          { src: currentSong.cover, sizes: "256x256", type: "image/jpeg" },
+          { src: currentSong.cover, sizes: "512x512", type: "image/jpeg" },
+        ],
+      });
+      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    }
+
+    try {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (!isPlaying) togglePlay();
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (isPlaying) togglePlay();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+      navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime !== undefined) {
+          handleSeek(details.seekTime);
+        }
+      });
+      navigator.mediaSession.setActionHandler("seekbackward", () => seekBy(-5));
+      navigator.mediaSession.setActionHandler("seekforward", () => seekBy(5));
+    } catch (e) {
+      console.warn("MediaSession handler error:", e);
+    }
+  }, [currentSong, isPlaying, togglePlay, handlePrev, handleNext]);
+
+  // 4. KEYBOARD SHORTCUTS
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      if (
+        (e.target as HTMLElement).tagName === "INPUT" ||
+        (e.target as HTMLElement).tagName === "TEXTAREA"
+      ) {
+        return;
+      }
       const audio = audioRef.current;
       if (!audio) return;
 
       switch (e.code) {
         case "Space":
           e.preventDefault();
-          audio.paused
-            ? (audio.play(), setIsPlaying(true))
-            : (audio.pause(), setIsPlaying(false));
+          togglePlay();
           break;
         case "ArrowRight":
           e.preventDefault();
@@ -243,39 +305,36 @@ export function useAudioPlayer(songs: Song[]) {
           handlePrev();
           break;
         case "KeyL":
-          audio.currentTime = Math.min(
-            audio.currentTime + 5,
-            audio.duration || 0
-          );
+          seekBy(5);
           break;
         case "KeyJ":
-          audio.currentTime = Math.max(audio.currentTime - 5, 0);
+          seekBy(-5);
           break;
         case "KeyM":
           handleVolumeChange(audio.volume > 0 ? 0 : 1);
           break;
         case "ArrowUp":
           e.preventDefault();
-          handleVolumeChange(Math.min(audio.volume + 0.1, 1));
+          handleVolumeChange(Math.min(audio.volume + 0.05, 1));
           break;
         case "ArrowDown":
           e.preventDefault();
-          handleVolumeChange(Math.max(audio.volume - 0.1, 0));
+          handleVolumeChange(Math.max(audio.volume - 0.05, 0));
           break;
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleVolumeChange, handleNext, handlePrev]);
+  }, [handleVolumeChange, handleNext, handlePrev, togglePlay]);
 
-  // 4. Title
+  // 5. Title
   useEffect(() => {
     if (currentSong) {
       document.title = isPlaying
-        ? `▶ ${currentSong.title} - ${currentSong.artist}`
-        : `${currentSong.title} - ${currentSong.artist}`;
+        ? `▶ ${currentSong.title} • ${currentSong.artist}`
+        : `${currentSong.title} • ${currentSong.artist}`;
     } else {
-      document.title = "One Music";
+      document.title = "One Music - Premium Web Player";
     }
   }, [currentSong, isPlaying]);
 
@@ -288,6 +347,9 @@ export function useAudioPlayer(songs: Song[]) {
     likedSongs,
     isShuffle,
     repeatMode,
+    playbackRate,
+    setPlaybackRate,
+    seekBy,
     playSong,
     togglePlay,
     handleNext,
@@ -297,6 +359,6 @@ export function useAudioPlayer(songs: Song[]) {
     toggleLike,
     toggleShuffle,
     toggleRepeat,
-    setPlaylist, // Export fungsi ini
+    setPlaylist,
   };
 }
