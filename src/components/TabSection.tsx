@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 interface TabSectionProps {
   activeTab: string;
@@ -27,7 +28,7 @@ export default function TabSection({
 }: TabSectionProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-      {/* CATEGORY PILLS */}
+      {/* CATEGORY PILLS WITH MAGNETIC SLIDING PILL ANIMATION */}
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide w-full sm:w-auto py-1">
         {CATEGORIES.map((cat) => {
           const isActive = activeTab === cat.id;
@@ -35,38 +36,57 @@ export default function TabSection({
             <button
               key={cat.id}
               onClick={() => setActiveTab(cat.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? "bg-[#22c527] text-black shadow-[0_0_15px_rgba(34,197,39,0.35)] scale-105"
-                  : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5"
-              }`}
+              className="relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer select-none"
             >
-              <i className={`${cat.icon} text-xs`}></i>
-              <span>{cat.label}</span>
-              {cat.id === "Favorites" && favoritesCount > 0 && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 ${
-                    isActive ? "bg-black/20 text-black" : "bg-white/10 text-[#22c527]"
-                  }`}
-                >
-                  {favoritesCount}
-                </span>
+              {/* MAGNETIC SLIDING PILL BACKGROUND */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeCategoryPill"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  className="absolute inset-0 bg-[#22c527] rounded-full shadow-[0_0_20px_rgba(34,197,39,0.4)]"
+                />
               )}
+
+              {/* NON-ACTIVE GLASS BACKGROUND */}
+              {!isActive && (
+                <div className="absolute inset-0 bg-white/4 hover:bg-white/8 border border-white/5 rounded-full transition-colors" />
+              )}
+
+              {/* BUTTON CONTENT */}
+              <span
+                className={`relative z-10 flex items-center gap-1.5 font-bold transition-colors ${
+                  isActive ? "text-black" : "text-white/70 hover:text-white"
+                }`}
+              >
+                <i className={`${cat.icon} text-xs`}></i>
+                <span>{cat.label}</span>
+                {cat.id === "Favorites" && favoritesCount > 0 && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5 ${
+                      isActive
+                        ? "bg-black/20 text-black"
+                        : "bg-white/10 text-[#22c527]"
+                    }`}
+                  >
+                    {favoritesCount}
+                  </span>
+                )}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {/* SORT CONTROLS */}
-      <div className="flex items-center gap-2 self-end sm:self-auto text-xs text-white/50 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5 shrink-0">
-        <i className="ri-sort-desc text-white/60"></i>
-        <span>Urutkan:</span>
+      {/* CUSTOM GLASS SORT DROPDOWN */}
+      <div className="relative flex items-center gap-2 self-end sm:self-auto text-xs text-white/60 bg-white/5 hover:bg-white/8 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md transition shadow-sm shrink-0">
+        <i className="ri-sort-desc text-[#22c527]"></i>
+        <span className="text-white/40">Urutkan:</span>
         <select
           value={sortBy}
           onChange={(e) =>
             setSortBy(e.target.value as "default" | "title" | "artist")
           }
-          className="bg-transparent text-white font-medium focus:outline-none cursor-pointer"
+          className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-1"
         >
           <option value="default" className="bg-[#18181b] text-white">
             Default

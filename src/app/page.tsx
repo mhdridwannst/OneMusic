@@ -74,12 +74,35 @@ export default function Home() {
       if (activeTab === "Favorites") {
         matchesTab = player.likedSongs.includes(song.id);
       } else if (activeTab !== "All Songs") {
-        matchesTab =
-          song.genre?.toLowerCase() === activeTab.toLowerCase() ||
-          song.genre
-            ?.toLowerCase()
-            .includes(activeTab.toLowerCase().split("/")[0].trim()) ||
-          false;
+        const songGenre = (song.genre || "").toLowerCase();
+        const tab = activeTab.toLowerCase();
+
+        if (tab === "pop") {
+          matchesTab =
+            (songGenre.includes("pop") && !songGenre.includes("indo")) ||
+            songGenre === "pop";
+        } else if (tab === "indonesian hits") {
+          matchesTab =
+            songGenre.includes("indo") ||
+            songGenre.includes("indonesian") ||
+            ["payung teduh", "tulus", "rizky febian", "nadin amizah", ".feast", "bilal indrajaya", "kunto aji", "stinky", "yahya", "aku jeje"].some(
+              (art) => song.artist.toLowerCase().includes(art)
+            );
+        } else if (tab.includes("indie")) {
+          matchesTab =
+            songGenre.includes("indie") || songGenre.includes("acoustic");
+        } else if (tab.includes("r&b")) {
+          matchesTab =
+            songGenre.includes("r&b") || songGenre.includes("soul");
+        } else if (tab.includes("lo-fi")) {
+          matchesTab =
+            songGenre.includes("lo-fi") ||
+            songGenre.includes("ambient") ||
+            songGenre.includes("chill");
+        } else {
+          matchesTab =
+            songGenre.includes(tab) || tab.includes(songGenre);
+        }
       }
 
       return matchesSearch && matchesTab;

@@ -94,7 +94,7 @@ export default function MiniPlayer({
       >
         <div
           onClick={onExpand}
-          className="relative bg-[#151518]/90 backdrop-blur-2xl border border-white/10 rounded-2xl md:rounded-3xl p-2.5 md:p-3.5 flex items-center justify-between shadow-2xl cursor-pointer hover:bg-[#1c1c22]/95 hover:border-white/20 transition-all group overflow-hidden"
+          className="relative bg-[#131317]/90 backdrop-blur-2xl border border-white/12 rounded-2xl md:rounded-3xl p-2.5 md:p-3.5 flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.8)] cursor-pointer hover:bg-[#18181f]/95 hover:border-white/20 transition-all group overflow-hidden"
         >
           {/* INTERACTIVE PROGRESS BAR DI ATAS (SEEKABLE & TOUCH DRAGGABLE) */}
           <div
@@ -103,20 +103,20 @@ export default function MiniPlayer({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="absolute top-0 left-0 right-0 h-2 md:h-1.5 md:hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar touch-none"
+            className="absolute top-0 left-0 right-0 h-1.5 md:h-1.5 md:hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar touch-none"
             title="Geser atau sentuh untuk mengatur durasi"
           >
             <div
               className="h-full bg-linear-to-r from-[#22c527] to-emerald-400 relative"
               style={{ width: `${progressPercent}%` }}
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white opacity-90 md:opacity-0 md:group-hover/bar:opacity-100 shadow-md"></div>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-white opacity-90 md:opacity-0 md:group-hover/bar:opacity-100 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
             </div>
           </div>
 
           {/* Ambient Glow halus dari Cover */}
           <div
-            className="absolute -left-10 -bottom-10 w-40 h-40 rounded-full blur-3xl opacity-20 pointer-events-none"
+            className="absolute -left-10 -bottom-10 w-44 h-44 rounded-full blur-3xl opacity-25 pointer-events-none"
             style={{
               backgroundImage: `radial-gradient(circle, #22c527, transparent 70%)`,
             }}
@@ -124,10 +124,10 @@ export default function MiniPlayer({
 
           {/* SISI KIRI: Info Lagu & Cover */}
           <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0 pr-2">
-            {/* Cover Album */}
+            {/* Cover Album Vinyl Look */}
             <div className="relative shrink-0">
               <div
-                className={`w-11 h-11 md:w-13 md:h-13 rounded-xl overflow-hidden border border-white/15 shadow-lg bg-[#18181b] ${
+                className={`w-11 h-11 md:w-13 md:h-13 rounded-xl overflow-hidden border border-white/20 shadow-md bg-[#18181b] ring-1 ring-inset ring-white/10 ${
                   isPlaying ? "scale-105" : "scale-100"
                 } transition-transform duration-300`}
               >
@@ -145,24 +145,27 @@ export default function MiniPlayer({
                 )}
               </div>
 
-              {/* Little equalizer badge */}
+              {/* Little Equalizer Pulse Dot */}
               {isPlaying && (
-                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22c527] rounded-full flex items-center justify-center border-2 border-[#151518]">
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22c527] rounded-full flex items-center justify-center border-2 border-[#131317] shadow-[0_0_8px_rgba(34,197,39,0.8)]">
                   <span className="w-1 h-1 bg-black rounded-full animate-ping"></span>
                 </div>
               )}
             </div>
 
-            {/* Title & Artist */}
+            {/* Title & Artist & Mobile Time */}
             <div className="flex flex-col min-w-0 overflow-hidden">
               <div className="flex items-center gap-2">
                 <h4 className="text-white font-bold text-xs md:text-sm truncate group-hover:text-[#22c527] transition-colors">
                   {currentSong.title}
                 </h4>
               </div>
-              <p className="text-white/50 text-[11px] md:text-xs truncate">
-                {currentSong.artist}
-              </p>
+              <div className="flex items-center gap-1.5 text-[11px] md:text-xs text-white/50">
+                <span className="truncate">{currentSong.artist}</span>
+                <span className="md:hidden font-mono text-[10px] text-white/40">
+                  • {formatTime(progress)}
+                </span>
+              </div>
             </div>
 
             {/* Quick Like Button (MiniPlayer) */}
@@ -171,9 +174,9 @@ export default function MiniPlayer({
                 e.stopPropagation();
                 onToggleLike();
               }}
-              className={`p-2 rounded-full transition-transform active:scale-125 ml-1 hidden sm:flex items-center justify-center ${
+              className={`p-2 rounded-full transition-transform active:scale-125 ml-1 hidden sm:flex items-center justify-center cursor-pointer ${
                 isLiked
-                  ? "text-[#22c527]"
+                  ? "text-[#22c527] drop-shadow-[0_0_8px_rgba(34,197,39,0.5)]"
                   : "text-white/40 hover:text-white"
               }`}
               title={isLiked ? "Hapus dari Favorit" : "Simpan ke Favorit"}
@@ -189,8 +192,8 @@ export default function MiniPlayer({
           {/* SISI TENGAH / KANAN: Real Time Tracker & Controls */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             {/* Timestamp Tracker (Desktop) */}
-            <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-white/50 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
-              <span className="text-white/80">{formatTime(progress)}</span>
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-white/50 bg-white/5 px-3 py-1 rounded-full border border-white/5 shadow-inner">
+              <span className="text-white/90 font-semibold">{formatTime(progress)}</span>
               <span>/</span>
               <span>{formatTime(duration)}</span>
             </div>
@@ -203,19 +206,23 @@ export default function MiniPlayer({
                   e.stopPropagation();
                   onPrev();
                 }}
-                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition"
+                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"
                 title="Lagu Sebelumnya"
               >
                 <i className="ri-skip-back-fill text-lg md:text-xl"></i>
               </button>
 
-              {/* Play / Pause */}
+              {/* Play / Pause with Soft Glow */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onPlayPause();
                 }}
-                className="w-10 h-10 md:w-11 md:h-11 bg-white hover:bg-[#22c527] text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg shadow-white/10"
+                className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition cursor-pointer ${
+                  isPlaying
+                    ? "bg-[#22c527] text-black shadow-[0_0_20px_rgba(34,197,39,0.5)]"
+                    : "bg-white hover:bg-[#22c527] text-black shadow-lg"
+                }`}
                 title={isPlaying ? "Jeda" : "Putar"}
               >
                 <i
@@ -231,7 +238,7 @@ export default function MiniPlayer({
                   e.stopPropagation();
                   onNext();
                 }}
-                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition"
+                className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"
                 title="Lagu Berikutnya"
               >
                 <i className="ri-skip-forward-fill text-lg md:text-xl"></i>
@@ -245,7 +252,7 @@ export default function MiniPlayer({
                   e.stopPropagation();
                   setShowVolumePopup((prev) => !prev);
                 }}
-                className="w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition"
+                className="w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition cursor-pointer"
                 title="Volume"
               >
                 <i
@@ -263,7 +270,7 @@ export default function MiniPlayer({
               {showVolumePopup && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-12 right-0 bg-[#1c1c22] border border-white/15 p-3 rounded-2xl shadow-xl flex items-center gap-2 w-36 z-30"
+                  className="absolute bottom-12 right-0 bg-[#1c1c22] border border-white/15 p-3 rounded-2xl shadow-2xl flex items-center gap-2 w-36 z-30 backdrop-blur-xl"
                 >
                   <i
                     onClick={() => onVolumeChange(volume === 0 ? 1 : 0)}
@@ -289,7 +296,7 @@ export default function MiniPlayer({
                   e.stopPropagation();
                   onOpenQueue();
                 }}
-                className="w-8 h-8 hidden sm:flex items-center justify-center text-white/50 hover:text-white transition"
+                className="w-8 h-8 hidden sm:flex items-center justify-center text-white/50 hover:text-white transition cursor-pointer"
                 title="Antrean Lagu (Up Next)"
               >
                 <i className="ri-play-list-2-line text-lg"></i>
@@ -302,7 +309,7 @@ export default function MiniPlayer({
                 e.stopPropagation();
                 onExpand();
               }}
-              className="w-8 h-8 flex items-center justify-center text-white/50 group-hover:text-white transition"
+              className="w-8 h-8 flex items-center justify-center text-white/50 group-hover:text-white transition cursor-pointer"
               title="Buka Player Penuh"
             >
               <i className="ri-arrow-up-s-line text-xl group-hover:-translate-y-0.5 transition-transform"></i>

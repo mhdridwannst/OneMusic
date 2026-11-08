@@ -7,13 +7,15 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
+    // Ignore all .next folders anywhere in the directory tree
+    "**/.next/**",
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "D:\\**",
-    "*:\\**",
+    "**/D:/**",
+    "D:/**",
+    "**/*D:*/**",
   ]),
 ]);
 

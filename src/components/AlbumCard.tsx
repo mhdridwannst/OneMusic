@@ -30,21 +30,23 @@ export default function AlbumCard({
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      className={`group relative flex flex-col gap-2.5 p-3 rounded-2xl cursor-pointer transition-colors duration-300 ${
+      className={`group relative flex flex-col gap-2.5 p-3 rounded-2xl cursor-pointer transition-all duration-300 ${
         isCurrentSong
-          ? "bg-white/8 border border-[#22c527]/40 shadow-[0_4px_25px_rgba(34,197,39,0.15)]"
-          : "bg-white/3 hover:bg-white/7 border border-white/5 hover:border-white/10"
+          ? isPlaying
+            ? "bg-white/8 border border-[#22c527]/50 animate-breathing-glow"
+            : "bg-white/8 border border-[#22c527]/40 shadow-[0_4px_25px_rgba(34,197,39,0.15)]"
+          : "bg-white/3 hover:bg-white/7 border border-white/5 hover:border-white/10 hover:shadow-xl hover:shadow-black/50"
       }`}
     >
-      {/* Cover Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-md bg-[#16161a]">
+      {/* Cover Image Container with Inner Rim Light */}
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl shadow-lg bg-[#16161a] ring-1 ring-inset ring-white/10">
         {!imageError ? (
           <img
             src={data.cover}
             alt={data.title}
             loading="lazy"
             onError={() => setImageError(true)}
-            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-106 ${
               isCurrentSong && isPlaying ? "brightness-90" : ""
             }`}
           />
@@ -57,15 +59,15 @@ export default function AlbumCard({
           </div>
         )}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient Overlay for Cinematic Depth */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Quick Like Heart Button (Top Right) */}
         <button
           onClick={onToggleLike}
           className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 z-10 ${
             isLiked
-              ? "bg-black/60 text-[#22c527] scale-100 opacity-100"
+              ? "bg-black/60 text-[#22c527] scale-100 opacity-100 shadow-md shadow-[#22c527]/20"
               : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 hover:scale-110"
           }`}
           title={isLiked ? "Hapus dari Favorit" : "Tambah ke Favorit"}
@@ -79,19 +81,17 @@ export default function AlbumCard({
 
         {/* Play / Pause Overlay Icon (Center) */}
         <div
-          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 pointer-events-none ${
             isCurrentSong
               ? "opacity-100 bg-black/30 backdrop-blur-[1px]"
               : "opacity-0 group-hover:opacity-100 bg-black/35 backdrop-blur-[1px]"
           }`}
         >
-          <motion.div
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-xl transition-all ${
+          <div
+            className={`w-11 h-11 rounded-full flex items-center justify-center shadow-2xl transition-all ${
               isCurrentSong
-                ? "bg-[#22c527] text-black shadow-[0_0_20px_rgba(34,197,39,0.5)]"
-                : "bg-white text-black hover:bg-[#22c527]"
+                ? "bg-[#22c527] text-black shadow-[0_0_20px_rgba(34,197,39,0.6)]"
+                : "bg-white text-black group-hover:scale-105"
             }`}
           >
             {isCurrentSong && isPlaying ? (
@@ -99,12 +99,12 @@ export default function AlbumCard({
             ) : (
               <i className="ri-play-fill text-2xl ml-0.5"></i>
             )}
-          </motion.div>
+          </div>
         </div>
 
         {/* Live Audio Equalizer Bars (Bottom Left when Playing) */}
         {isCurrentSong && (
-          <div className="absolute bottom-2.5 left-2.5 px-2 py-1 rounded-full bg-black/75 backdrop-blur-md flex items-center gap-1 border border-white/10 z-10">
+          <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md flex items-center gap-1 border border-white/10 z-10 shadow-lg">
             <span
               className={`w-1 bg-[#22c527] rounded-full ${
                 isPlaying ? "animate-music-bar-1 h-3" : "h-1.5"
@@ -125,7 +125,7 @@ export default function AlbumCard({
       </div>
 
       {/* Info Text */}
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5 px-0.5">
         <h4
           className={`font-bold text-xs md:text-sm truncate transition-colors ${
             isCurrentSong ? "text-[#22c527]" : "text-white group-hover:text-[#22c527]"
@@ -135,11 +135,11 @@ export default function AlbumCard({
           {data.title}
         </h4>
         <div className="flex items-center justify-between text-[11px] text-white/50">
-          <p className="truncate max-w-[70%]" title={data.artist}>
+          <p className="truncate max-w-[70%] font-medium" title={data.artist}>
             {data.artist}
           </p>
           {data.genre && (
-            <span className="text-[9px] uppercase tracking-wider text-white/35 font-medium px-1.5 py-0.2 bg-white/5 rounded">
+            <span className="text-[9px] uppercase tracking-wider text-white/40 font-bold px-1.5 py-0.2 bg-white/5 rounded border border-white/5">
               {data.genre.split("/")[0].trim()}
             </span>
           )}

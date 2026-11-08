@@ -12,7 +12,7 @@ export default function Footer() {
       </p>
       <div className="flex justify-center gap-6 text-white/60 mb-4">
         <a
-          href="https://github.com/wannn-sion95"
+          href="https://github.com/mhdridwannst"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition transform hover:scale-110"
