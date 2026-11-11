@@ -61,11 +61,13 @@ export default function Footer() {
           <i className="ri-linkedin-fill text-2xl"></i>
         </a>
       </div>
-      <p className="text-white/20 text-xs py-3">Gmail: wannnsion95@gmail.com</p>
+      <p className="text-white/20 text-xs py-3">
+        Gmail: mhdridwan1331@gmail.com
+      </p>
       <p className="text-white/20 text-xs">
         &copy; 2026 Created by{" "}
         <span className="text-white/60 hover:text-[#22c527] transition font-bold cursor-pointer">
-          Wannn Sion
+          mhdridwannst
         </span>
       </p>
     </footer>

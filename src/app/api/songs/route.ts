@@ -50,7 +50,19 @@ export async function GET() {
         };
       });
 
-      return NextResponse.json(enrichedSongs, { status: 200 });
+      // Gabungkan lagu-lagu baru dari defaultSongs yang belum tercatat di Supabase
+      const existingTitles = new Set(enrichedSongs.map((s) => s.title.toLowerCase()));
+      const existingSrcs = new Set(enrichedSongs.map((s) => s.src.toLowerCase()));
+
+      const extraSongs = defaultSongs.filter(
+        (d) =>
+          !existingTitles.has(d.title.toLowerCase()) &&
+          !existingSrcs.has(d.src.toLowerCase())
+      );
+
+      const allSongs = [...enrichedSongs, ...extraSongs];
+
+      return NextResponse.json(allSongs, { status: 200 });
     }
 
     // Fallback otomatis ke default curated songs

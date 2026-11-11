@@ -7,6 +7,7 @@ import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 // KOMPONEN UI
 import Header from "@/components/Header";
 import HeroCarousel from "@/components/HeroCarousel";
+import RecentlyPlayed from "@/components/RecentlyPlayed";
 import TabSection from "@/components/TabSection";
 import SongList from "@/components/SongList";
 import Footer from "@/components/Footer";
@@ -18,6 +19,7 @@ import SkeletonLoader from "@/components/SkeletonLoader";
 export default function Home() {
   // --- STATE ---
   const [songs, setSongs] = useState<Song[]>([]);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
@@ -59,7 +61,35 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- 2. FILTERING & SORTING DATA ---
+  // --- 2. RECENTLY PLAYED PERSISTENCE ---
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("onemusic_recently_played");
+      if (saved) {
+        setRecentlyPlayed(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn("Failed to load recently played:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!player.currentSong) return;
+    setRecentlyPlayed((prev) => {
+      const filtered = prev.filter((s) => s.id !== player.currentSong!.id);
+      const updated = [player.currentSong!, ...filtered].slice(0, 8);
+      localStorage.setItem("onemusic_recently_played", JSON.stringify(updated));
+      return updated;
+    });
+  }, [player.currentSong]);
+
+  const handleClearRecentlyPlayed = () => {
+    setRecentlyPlayed([]);
+    localStorage.removeItem("onemusic_recently_played");
+    triggerToast("Riwayat baru saja diputar dibersihkan");
+  };
+
+  // --- 3. FILTERING & SORTING DATA ---
   const displayedSongs = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
 
@@ -79,15 +109,37 @@ export default function Home() {
 
         if (tab === "pop") {
           matchesTab =
-            (songGenre.includes("pop") && !songGenre.includes("indo")) ||
+            (songGenre.includes("pop") && !songGenre.includes("indo") && !songGenre.includes("k-pop")) ||
             songGenre === "pop";
+        } else if (tab === "k-pop") {
+          matchesTab =
+            songGenre.includes("k-pop") ||
+            [
+              "bts",
+              "twice",
+              "illit",
+              "jung kook",
+              "fifty fifty",
+              "leehi",
+            ].some((art) => song.artist.toLowerCase().includes(art));
         } else if (tab === "indonesian hits") {
           matchesTab =
             songGenre.includes("indo") ||
             songGenre.includes("indonesian") ||
-            ["payung teduh", "tulus", "rizky febian", "nadin amizah", ".feast", "bilal indrajaya", "kunto aji", "stinky", "yahya", "aku jeje"].some(
-              (art) => song.artist.toLowerCase().includes(art)
-            );
+            [
+              "payung teduh",
+              "tulus",
+              "rizky febian",
+              "nadin amizah",
+              ".feast",
+              "bilal indrajaya",
+              "kunto aji",
+              "stinky",
+              "yahya",
+              "aku jeje",
+              "raim laode",
+              "enau",
+            ].some((art) => song.artist.toLowerCase().includes(art));
         } else if (tab.includes("indie")) {
           matchesTab =
             songGenre.includes("indie") || songGenre.includes("acoustic");
@@ -116,7 +168,7 @@ export default function Home() {
     }
 
     return filtered;
-  }, [songs, searchTerm, activeTab, sortBy, player.likedSongs]);
+  }, [activeTab, sortBy, searchTerm, songs, player.likedSongs]);
 
   // Sync playlist aktif ke hook player
   useEffect(() => {
@@ -179,6 +231,17 @@ export default function Home() {
               isPlaying={player.isPlaying}
               onPlay={player.playSong}
               onTogglePlay={player.togglePlay}
+            />
+          )}
+
+          {/* Section Baru Saja Diputar (Recently Played) */}
+          {!searchTerm && activeTab === "All Songs" && recentlyPlayed.length > 0 && (
+            <RecentlyPlayed
+              songs={recentlyPlayed}
+              currentSong={player.currentSong}
+              isPlaying={player.isPlaying}
+              onPlay={player.playSong}
+              onClear={handleClearRecentlyPlayed}
             />
           )}
 
@@ -302,6 +365,16 @@ export default function Home() {
         onSelectSong={player.playSong}
         playbackRate={player.playbackRate}
         onPlaybackRateChange={player.setPlaybackRate}
+        sleepTimerMinutes={player.sleepTimerMinutes}
+        sleepTimerRemaining={player.sleepTimerRemaining}
+        onSetSleepTimer={(mins) => {
+          player.setSleepTimer(mins);
+          triggerToast(
+            mins
+              ? `Timer tidur diatur ke ${mins} menit 🌙`
+              : "Timer tidur dinonaktifkan"
+          );
+        }}
       />
     </main>
   );

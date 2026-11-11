@@ -17,8 +17,13 @@ export function useAudioPlayer(songs: Song[]) {
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
 
+  // State Sleep Timer (dalam menit & sisa detik)
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
+  const initialVolumeRef = useRef<number>(1);
 
   // Ref untuk menyimpan Playlist/Antrian yang sedang aktif
   const playlistRef = useRef<Song[]>(songs);
@@ -56,6 +61,7 @@ export function useAudioPlayer(songs: Song[]) {
   const handleVolumeChange = useCallback((newVolume: number) => {
     const clamped = Math.max(0, Math.min(1, newVolume));
     setVolume(clamped);
+    initialVolumeRef.current = clamped;
     if (audioRef.current) {
       audioRef.current.volume = clamped;
       localStorage.setItem("volume", clamped.toString());
@@ -66,6 +72,21 @@ export function useAudioPlayer(songs: Song[]) {
     setPlaybackRateState(rate);
     if (audioRef.current) {
       audioRef.current.playbackRate = rate;
+    }
+  }, []);
+
+  // Sleep Timer Handler
+  const setSleepTimer = useCallback((minutes: number | null) => {
+    setSleepTimerMinutes(minutes);
+    if (minutes === null) {
+      setSleepTimerRemaining(null);
+      // Restore normal volume jika sempat fade
+      if (audioRef.current) {
+        audioRef.current.volume = initialVolumeRef.current;
+        setVolume(initialVolumeRef.current);
+      }
+    } else {
+      setSleepTimerRemaining(minutes * 60);
     }
   }, []);
 
@@ -205,6 +226,7 @@ export function useAudioPlayer(songs: Song[]) {
       if (savedVol) {
         const vol = parseFloat(savedVol);
         setVolume(vol);
+        initialVolumeRef.current = vol;
         if (audioRef.current) audioRef.current.volume = vol;
       }
 
@@ -272,7 +294,40 @@ export function useAudioPlayer(songs: Song[]) {
     };
   }, [handleNext, repeatMode, isShuffle, safePlay]);
 
-  // 3. MediaSession API (Lockscreen & OS Multimedia Controls)
+  // 3. Sleep Timer Effect with Smooth Fade-out
+  useEffect(() => {
+    if (sleepTimerRemaining === null || sleepTimerRemaining <= 0) return;
+
+    const interval = setInterval(() => {
+      setSleepTimerRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          // Timer Habis: Pause audio & restore volume
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.volume = initialVolumeRef.current;
+            setVolume(initialVolumeRef.current);
+          }
+          setIsPlaying(false);
+          setSleepTimerMinutes(null);
+          return null;
+        }
+
+        // Fade-out halus di 15 detik terakhir
+        if (prev <= 15 && audioRef.current) {
+          const fadeRatio = (prev - 1) / 15;
+          const fadedVol = initialVolumeRef.current * fadeRatio;
+          audioRef.current.volume = Math.max(0, fadedVol);
+          setVolume(fadedVol);
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sleepTimerRemaining]);
+
+  // 4. MediaSession API (Lockscreen & OS Multimedia Controls)
   useEffect(() => {
     if (typeof window === "undefined" || !("mediaSession" in navigator)) return;
 
@@ -312,7 +367,7 @@ export function useAudioPlayer(songs: Song[]) {
     }
   }, [currentSong, isPlaying, togglePlay, handlePrev, handleNext]);
 
-  // 4. KEYBOARD SHORTCUTS
+  // 5. KEYBOARD SHORTCUTS
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -360,7 +415,7 @@ export function useAudioPlayer(songs: Song[]) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleVolumeChange, handleNext, handlePrev, togglePlay]);
 
-  // 5. Title
+  // 6. Title
   useEffect(() => {
     if (currentSong) {
       document.title = isPlaying
@@ -381,6 +436,9 @@ export function useAudioPlayer(songs: Song[]) {
     isShuffle,
     repeatMode,
     playbackRate,
+    sleepTimerMinutes,
+    sleepTimerRemaining,
+    setSleepTimer,
     setPlaybackRate,
     seekBy,
     playSong,

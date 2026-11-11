@@ -26,6 +26,9 @@ interface FullPlayerProps {
   onSelectSong?: (song: Song) => void;
   playbackRate?: number;
   onPlaybackRateChange?: (rate: number) => void;
+  sleepTimerMinutes?: number | null;
+  sleepTimerRemaining?: number | null;
+  onSetSleepTimer?: (minutes: number | null) => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -76,10 +79,14 @@ export default function FullPlayer({
   onSelectSong,
   playbackRate = 1,
   onPlaybackRateChange,
+  sleepTimerMinutes = null,
+  sleepTimerRemaining = null,
+  onSetSleepTimer,
 }: FullPlayerProps) {
   const [lyrics, setLyrics] = useState<{ time: number; content: string }[]>([]);
   const [activeRightTab, setActiveRightTab] = useState<"lyrics" | "queue">("lyrics");
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showTimerMenu, setShowTimerMenu] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const lyricRefs = useRef<(HTMLParagraphElement | null)[]>([]);
@@ -236,12 +243,79 @@ export default function FullPlayer({
               </span>
             </div>
 
-            {/* SPEED & FAVORITE ACTIONS */}
+            {/* SPEED, SLEEP TIMER & FAVORITE ACTIONS */}
             <div className="relative flex items-center gap-2">
+              {/* SLEEP TIMER BUTTON & POPOVER */}
+              {onSetSleepTimer && (
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setShowTimerMenu((p) => !p);
+                      setShowSpeedMenu(false);
+                    }}
+                    className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-full border transition flex items-center gap-1.5 cursor-pointer text-xs font-bold ${
+                      sleepTimerRemaining !== null && sleepTimerRemaining > 0
+                        ? "bg-[#22c527]/15 border-[#22c527]/40 text-[#22c527] shadow-[0_0_12px_rgba(34,197,39,0.25)]"
+                        : "bg-white/5 hover:bg-white/15 border-white/10 text-white/70 hover:text-white"
+                    }`}
+                    title="Sleep Timer"
+                  >
+                    <i
+                      className={
+                        sleepTimerRemaining !== null && sleepTimerRemaining > 0
+                          ? "ri-moon-fill text-sm text-[#22c527]"
+                          : "ri-moon-line text-sm"
+                      }
+                    ></i>
+                    {sleepTimerRemaining !== null && sleepTimerRemaining > 0 && (
+                      <span className="font-mono text-[11px]">
+                        {formatTime(sleepTimerRemaining)}
+                      </span>
+                    )}
+                  </button>
+
+                  {showTimerMenu && (
+                    <div className="absolute right-0 top-12 bg-[#16161a]/95 border border-white/15 rounded-2xl p-2 shadow-2xl flex flex-col gap-1 z-50 backdrop-blur-2xl min-w-[130px] animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-2.5 py-1 text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                        Sleep Timer
+                      </div>
+                      {[
+                        { label: "Mati", value: null },
+                        { label: "15 Menit", value: 15 },
+                        { label: "30 Menit", value: 30 },
+                        { label: "45 Menit", value: 45 },
+                        { label: "60 Menit", value: 60 },
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={() => {
+                            onSetSleepTimer(item.value);
+                            setShowTimerMenu(false);
+                          }}
+                          className={`px-3 py-1.5 text-xs rounded-xl font-bold transition flex items-center justify-between cursor-pointer ${
+                            sleepTimerMinutes === item.value
+                              ? "bg-[#22c527] text-black shadow-md"
+                              : "text-white/80 hover:bg-white/10"
+                          }`}
+                        >
+                          <span>{item.label}</span>
+                          {sleepTimerMinutes === item.value && (
+                            <i className="ri-check-line font-black"></i>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {onPlaybackRateChange && (
                 <div className="relative">
                   <button
-                    onClick={() => setShowSpeedMenu((p) => !p)}
+                    onClick={() => {
+                      setShowSpeedMenu((p) => !p);
+                      setShowTimerMenu(false);
+                    }}
                     className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-xs font-mono font-bold text-white/80 transition cursor-pointer"
                     title="Playback Speed"
                   >

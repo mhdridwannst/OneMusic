@@ -139,7 +139,7 @@ export default function AlbumCard({
             {data.artist}
           </p>
           {data.genre && (
-            <span className="text-[9px] uppercase tracking-wider text-white/40 font-bold px-1.5 py-0.2 bg-white/5 rounded border border-white/5">
+            <span className="text-[9px] uppercase tracking-wider text-white/40 font-bold px-1.5 py-0.5 bg-white/5 rounded border border-white/5 shrink-0">
               {data.genre.split("/")[0].trim()}
             </span>
           )}
