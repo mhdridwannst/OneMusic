@@ -2,7 +2,7 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:000000,100:1DB954&height=180&section=header&text=OneMusic&fontSize=56&fontColor=ffffff&fontAlignY=40" width="100%" alt="OneMusic"/>
 
-**Pemutar musik web dengan lirik yang jalan sendiri mengikuti lagu.**
+**Web app Music.**
 Desainnya terinspirasi Spotify, dibuat dengan Next.js dan Supabase.
 
 <p>
