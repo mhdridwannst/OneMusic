@@ -4,7 +4,7 @@
 
 # One<span style="color:#22c527">Music</span>
 
-**Web App Music and make your day more colorfull**
+**Semua musik favoritmu dalam satu platform modern. Nikmati pengalaman mendengarkan lagu yang cepat, jernih, dan bebas hambatan langsung dari browser.**
 
 <p>
   <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 16" />
