@@ -857,7 +857,7 @@ const localSongs: Song[] = [
     artist: "YOASOBI",
     genre: "J-Pop",
     cover: "/images/yoasobi-ano-yume.jpg",
-    src: "/music/YOASOBI - 「あの夢をなぞって」.mp3",
+    src: "/music/yoasobi-ano-yume-wo-nazotte.mp3",
   },
   {
     id: 97,
@@ -865,7 +865,7 @@ const localSongs: Song[] = [
     artist: "YOASOBI",
     genre: "J-Pop",
     cover: "/images/yoasobi-tabun.jpg",
-    src: "/music/YOASOBI - 「たぶん」.mp3",
+    src: "/music/yoasobi-tabun.mp3",
   },
   {
     id: 98,
@@ -873,7 +873,7 @@ const localSongs: Song[] = [
     artist: "Ariana Grande",
     genre: "Pop",
     cover: "/images/new-release-cover.svg",
-    src: "/music/Ariana Grande - bye [Altare Remix].mp3",
+    src: "/music/Ariana Grande - bye Altare Remix.mp3",
   },
   {
     id: 99,
@@ -1001,7 +1001,7 @@ const localSongs: Song[] = [
     artist: "ROSÉ & Bruno Mars",
     genre: "Pop",
     cover: "/images/new-release-cover.svg",
-    src: "/music/ROSÉ & Bruno Mars - APT.mp3",
+    src: "/music/rose-bruno-apt.mp3",
   },
   {
     id: 115,
