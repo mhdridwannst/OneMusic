@@ -1,31 +1,33 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { defaultSongs } from "@/data/defaultSongs";
+import { resolveAudioSrc } from "@/lib/audio";
 
 export async function GET() {
+  const json = (songs: typeof defaultSongs) =>
+    NextResponse.json(songs, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+      },
+    });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
   try {
-    // Beri batas waktu 3 detik untuk koneksi Supabase
-    const fetchSupabase = async () => {
-      const { data, error } = await supabase
+    const { data, error } = await supabase
         .from("songs")
         .select("*")
-        .order("id", { ascending: true });
+        .order("id", { ascending: true })
+        .abortSignal(controller.signal);
 
-      if (error || !data || data.length === 0) {
-        return null;
-      }
-      return data;
-    };
+    if (error || !data || data.length === 0) {
+      return json(defaultSongs);
+    }
 
-    const timeoutPromise = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), 3000)
-    );
-
-    const result = await Promise.race([fetchSupabase(), timeoutPromise]);
-
-    if (result && result.length > 0) {
+    if (data.length > 0) {
       // Normalisasi path dan sematkan genre dari curated defaultSongs
-      const enrichedSongs = result.map((song) => {
+      const enrichedSongs = data.map((song) => {
         // Ekstrak nama file misal 'music/laufey.mp3' -> 'laufey'
         const filename = (song.src || "")
           .split("/")
@@ -45,7 +47,9 @@ export async function GET() {
           artist: song.artist || matched?.artist || "Unknown Artist",
           genre: song.genre || matched?.genre || "Pop",
           cover: song.cover ? (song.cover.startsWith("/") ? song.cover : `/${song.cover}`) : matched?.cover || "/images/laufey.jpg",
-          src: song.src ? (song.src.startsWith("/") ? song.src : `/${song.src}`) : matched?.src || "",
+          src: song.src
+            ? resolveAudioSrc(song.src.startsWith("/") ? song.src : `/${song.src}`)
+            : matched?.src || "",
           lrc: song.lrc ? (song.lrc.startsWith("/") ? song.lrc : `/${song.lrc}`) : matched?.lrc || "",
         };
       });
@@ -62,13 +66,14 @@ export async function GET() {
 
       const allSongs = [...enrichedSongs, ...extraSongs];
 
-      return NextResponse.json(allSongs, { status: 200 });
+      return json(allSongs);
     }
 
-    // Fallback otomatis ke default curated songs
-    return NextResponse.json(defaultSongs, { status: 200 });
+    return json(defaultSongs);
   } catch (error) {
     console.warn("Supabase unreachable, using local fallback songs:", error);
-    return NextResponse.json(defaultSongs, { status: 200 });
+    return json(defaultSongs);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

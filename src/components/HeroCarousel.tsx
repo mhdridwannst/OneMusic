@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Song } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,9 +55,11 @@ export default function HeroCarousel({
           transition={{ duration: 0.8 }}
           className="absolute inset-0 -z-10 scale-95 translate-y-4 rounded-4xl overflow-hidden blur-3xl pointer-events-none"
         >
-          <img
+          <Image
             src={currentFeatured.cover}
             alt=""
+            fill
+            sizes="100vw"
             className="w-full h-full object-cover"
           />
         </motion.div>
@@ -75,9 +77,13 @@ export default function HeroCarousel({
             className="absolute inset-0"
           >
             {/* Background Cover Image */}
-            <img
+            <Image
               src={currentFeatured.cover}
               alt={currentFeatured.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 1200px"
+              loading="eager"
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
             {/* Multi-layered Vignette Shadowing */}

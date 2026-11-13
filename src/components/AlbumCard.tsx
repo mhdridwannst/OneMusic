@@ -10,6 +10,8 @@ interface AlbumCardProps {
   isLiked: boolean;
   onPlay: () => void;
   onToggleLike: (e: React.MouseEvent) => void;
+  isInPlaylist: boolean;
+  onTogglePlaylist: (e: React.MouseEvent) => void;
 }
 
 export default function AlbumCard({
@@ -19,12 +21,23 @@ export default function AlbumCard({
   isLiked,
   onPlay,
   onToggleLike,
+  isInPlaylist,
+  onTogglePlaylist,
 }: AlbumCardProps) {
   const [imageError, setImageError] = useState(false);
 
   return (
     <motion.div
       onClick={onPlay}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onPlay();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Putar ${data.title} oleh ${data.artist}`}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.96 }}
       initial={{ opacity: 0, y: 15 }}
@@ -68,8 +81,9 @@ export default function AlbumCard({
           className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 z-10 ${
             isLiked
               ? "bg-black/60 text-[#22c527] scale-100 opacity-100 shadow-md shadow-[#22c527]/20"
-              : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 hover:scale-110"
+              : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:scale-110"
           }`}
+          aria-label={isLiked ? "Hapus dari favorit" : "Tambah ke favorit"}
           title={isLiked ? "Hapus dari Favorit" : "Tambah ke Favorit"}
         >
           <i
@@ -77,6 +91,22 @@ export default function AlbumCard({
               isLiked ? "ri-heart-3-fill text-[#22c527]" : "ri-heart-3-line"
             } text-base`}
           ></i>
+        </button>
+        <button
+          onClick={onTogglePlaylist}
+          className={`absolute top-2.5 left-2.5 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 z-10 ${
+            isInPlaylist
+              ? "bg-[#22c527] text-black opacity-100 shadow-md shadow-[#22c527]/20"
+              : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:scale-110"
+          }`}
+          aria-label={
+            isInPlaylist
+              ? "Hapus dari playlist saya"
+              : "Tambahkan ke playlist saya"
+          }
+          title={isInPlaylist ? "Hapus dari Playlist" : "Tambah ke Playlist"}
+        >
+          <i className={`${isInPlaylist ? "ri-play-list-2-fill" : "ri-add-line"} text-base`}></i>
         </button>
 
         {/* Play / Pause Overlay Icon (Center) */}

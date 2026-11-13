@@ -2,7 +2,11 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:000000,100:1DB954&height=180&section=header&text=OneMusic&fontSize=56&fontColor=ffffff&fontAlignY=40" width="100%" alt="OneMusic"/>
 
+<<<<<<< HEAD
 **Web app Music.**
+=======
+**Web app music to enjoy your day.**
+>>>>>>> f0c62d3 (update something and add more song)
 Desainnya terinspirasi Spotify, dibuat dengan Next.js dan Supabase.
 
 <p>
@@ -55,6 +59,7 @@ Saat lagu diputar, player membandingkan waktu putar saat ini dengan penanda wakt
 
 ## Tech stack
 
+<<<<<<< HEAD
 | Bagian | Teknologi |
 | --- | --- |
 | Framework | Next.js 16, React 19 |
@@ -63,6 +68,16 @@ Saat lagu diputar, player membandingkan waktu putar saat ini dengan penanda wakt
 | Styling | Tailwind CSS 4 |
 | Animasi | Framer Motion |
 | Hosting | Vercel |
+=======
+| Bagian    | Teknologi             |
+| --------- | --------------------- |
+| Framework | Next.js 16, React 19  |
+| Bahasa    | TypeScript            |
+| Database  | Supabase (PostgreSQL) |
+| Styling   | Tailwind CSS 4        |
+| Animasi   | Framer Motion         |
+| Hosting   | Vercel                |
+>>>>>>> f0c62d3 (update something and add more song)
 
 ## Menjalankan di komputer sendiri
 
@@ -108,6 +123,10 @@ Buat file `.env.local` di root proyek:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=isi-dengan-anon-key
+
+# URL folder/bucket publik untuk file MP3, tanpa trailing slash.
+# Contoh Supabase Storage:
+# NEXT_PUBLIC_AUDIO_BASE_URL=https://xxxx.supabase.co/storage/v1/object/public/music
 ```
 
 Nilainya ada di dashboard Supabase, menu **Project Settings → API**.
@@ -120,6 +139,46 @@ npm run dev
 
 Buka [http://localhost:3000](http://localhost:3000).
 
+### Audio lokal dan deployment
+
+File MP3 lokal sengaja diabaikan Git melalui `public/music/`. Saat development
+tanpa `NEXT_PUBLIC_AUDIO_BASE_URL`, aplikasi membaca file tersebut dari komputer
+lokal. Untuk deployment, upload MP3 ke Supabase Storage (bucket publik bernama
+`music`, atau folder lain yang kamu pilih), lalu isi `NEXT_PUBLIC_AUDIO_BASE_URL`
+dengan URL folder tersebut di environment Vercel. Nama file di storage harus
+sama dengan nama file MP3 di folder lokal.
+
+Untuk mengunggah semua audio sekaligus, buat bucket Storage publik bernama
+`music`, lalu jalankan perintah berikut dari PowerShell. Service role key hanya
+dipakai lokal untuk proses upload dan jangan pernah dimasukkan ke Git atau
+environment variable client:
+
+```powershell
+$env:SUPABASE_SERVICE_ROLE_KEY="service-role-key-dari-supabase"
+$env:SUPABASE_AUDIO_BUCKET="music"
+npm run upload:audio
+```
+
+Setelah upload selesai, isi environment variable deployment:
+
+```env
+NEXT_PUBLIC_AUDIO_BASE_URL=https://xxxx.supabase.co/storage/v1/object/public/music
+```
+
+<<<<<<< HEAD
+=======
+Sebelum commit atau deploy, validasi seluruh katalog dan jalankan pemeriksaan production:
+
+```bash
+npm run validate:catalog
+npm run lint
+npm run build
+```
+
+`validate:catalog` memastikan setiap lagu memiliki ID unik serta file audio dan cover
+yang tersedia di folder `public`.
+
+>>>>>>> f0c62d3 (update something and add more song)
 ## Deploy
 
 Hubungkan repo ke Vercel, lalu isi dua environment variable di atas lewat **Settings → Environment Variables**. Setelah itu setiap push ke branch utama akan otomatis di-deploy.

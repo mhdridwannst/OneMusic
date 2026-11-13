@@ -3,14 +3,37 @@ import { Song } from "@/types";
 
 type RepeatMode = "off" | "all" | "one";
 
+const getStoredVolume = () => {
+  if (typeof window === "undefined") return 1;
+  const parsed = Number(window.localStorage.getItem("volume"));
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 1;
+};
+
+const getStoredLikes = () => {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(
+      window.localStorage.getItem("likedSongs") || "[]",
+    );
+    return Array.isArray(parsed) &&
+      parsed.every((id) => typeof id === "number")
+      ? parsed
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 export function useAudioPlayer(songs: Song[]) {
   // State Utama
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [likedSongs, setLikedSongs] = useState<number[]>([]);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [priorityQueue, setPriorityQueue] = useState<Song[]>([]);
+  const [volume, setVolume] = useState(getStoredVolume);
+  const [likedSongs, setLikedSongs] = useState<number[]>(getStoredLikes);
   const [playbackRate, setPlaybackRateState] = useState(1);
 
   // State Shuffle & Repeat
@@ -23,10 +46,13 @@ export function useAudioPlayer(songs: Song[]) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
-  const initialVolumeRef = useRef<number>(1);
+  const initialVolumeRef = useRef<number>(getStoredVolume());
+  const hasRestoredStateRef = useRef(false);
 
   // Ref untuk menyimpan Playlist/Antrian yang sedang aktif
   const playlistRef = useRef<Song[]>(songs);
+  const priorityQueueRef = useRef<Song[]>([]);
+  const hasRestoredQueueRef = useRef(false);
 
   // --- SAFE PLAY HELPER (Mencegah AbortError saat klik cepat) ---
   const safePlay = useCallback((audio: HTMLAudioElement) => {
@@ -57,6 +83,82 @@ export function useAudioPlayer(songs: Song[]) {
   const setPlaylist = useCallback((newPlaylist: Song[]) => {
     playlistRef.current = newPlaylist;
   }, []);
+
+  const queueSongNext = useCallback((song: Song) => {
+    if (currentSong?.id === song.id) return;
+    setPriorityQueue((current) => {
+      const nextQueue = [
+        song,
+        ...current.filter((queued) => queued.id !== song.id),
+      ];
+      priorityQueueRef.current = nextQueue;
+      return nextQueue;
+    });
+  }, [currentSong]);
+
+  const removeQueuedSong = useCallback((songId: number) => {
+    setPriorityQueue((current) => {
+      const nextQueue = current.filter((song) => song.id !== songId);
+      priorityQueueRef.current = nextQueue;
+      return nextQueue;
+    });
+  }, []);
+
+  const moveQueuedSong = useCallback((index: number, direction: -1 | 1) => {
+    setPriorityQueue((current) => {
+      const targetIndex = index + direction;
+      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) {
+        return current;
+      }
+      const nextQueue = [...current];
+      [nextQueue[index], nextQueue[targetIndex]] = [
+        nextQueue[targetIndex],
+        nextQueue[index],
+      ];
+      priorityQueueRef.current = nextQueue;
+      return nextQueue;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (songs.length === 0 || hasRestoredQueueRef.current) return;
+    hasRestoredQueueRef.current = true;
+
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("onemusic_priority_queue") || "[]",
+      );
+      if (!Array.isArray(saved) || !saved.every((id) => Number.isInteger(id))) {
+        return;
+      }
+
+      const restored = saved
+        .map((id: number) => songs.find((song) => song.id === id))
+        .filter((song): song is Song => song !== undefined);
+      priorityQueueRef.current = restored;
+      setTimeout(() => setPriorityQueue(restored), 0);
+    } catch (error) {
+      console.warn("Failed to restore priority queue:", error);
+    }
+  }, [songs]);
+
+  useEffect(() => {
+    if (!hasRestoredQueueRef.current) return;
+    localStorage.setItem(
+      "onemusic_priority_queue",
+      JSON.stringify(priorityQueueRef.current.map((song) => song.id)),
+    );
+  }, [priorityQueue]);
+
+  useEffect(() => {
+    if (songs.length === 0) return;
+    setPriorityQueue((current) => {
+      const availableIds = new Set(songs.map((song) => song.id));
+      const validQueue = current.filter((song) => availableIds.has(song.id));
+      priorityQueueRef.current = validQueue;
+      return validQueue.length === current.length ? current : validQueue;
+    });
+  }, [songs]);
 
   const handleVolumeChange = useCallback((newVolume: number) => {
     const clamped = Math.max(0, Math.min(1, newVolume));
@@ -91,7 +193,7 @@ export function useAudioPlayer(songs: Song[]) {
   }, []);
 
   const playSong = useCallback(
-    (song: Song) => {
+    (song: Song, options?: { autoplay?: boolean }) => {
       const audio = audioRef.current;
       if (!audio) return;
 
@@ -100,10 +202,15 @@ export function useAudioPlayer(songs: Song[]) {
         audio.src = song.src;
         audio.playbackRate = playbackRate;
         setCurrentSong(song);
+        setAudioError(null);
         setProgress(0);
         localStorage.setItem("lastSongId", song.id.toString());
       }
-      safePlay(audio);
+      if (options?.autoplay !== false) {
+        safePlay(audio);
+      } else {
+        setIsPlaying(false);
+      }
     },
     [currentSong, playbackRate, safePlay]
   );
@@ -126,6 +233,12 @@ export function useAudioPlayer(songs: Song[]) {
     if (!currentSong) return;
 
     const currentList = playlistRef.current;
+    const queuedSong = priorityQueueRef.current.shift();
+    if (queuedSong) {
+      setPriorityQueue((current) => current.slice(1));
+      playSong(queuedSong);
+      return;
+    }
     if (currentList.length === 0) return;
 
     let nextIndex: number;
@@ -218,46 +331,57 @@ export function useAudioPlayer(songs: Song[]) {
 
   // --- EFFECTS ---
 
-  // 1. Init & Load Storage
+  // 1. Init audio element once
   useEffect(() => {
-    audioRef.current = new Audio();
-    setTimeout(() => {
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.volume = getStoredVolume();
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+      audioRef.current = null;
+    };
+  }, []);
+
+  // 2. Load persisted state after the playlist is available
+  useEffect(() => {
+    if (songs.length === 0 || hasRestoredStateRef.current) return;
+    hasRestoredStateRef.current = true;
+    let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+
+    try {
       const savedVol = localStorage.getItem("volume");
       if (savedVol) {
         const vol = parseFloat(savedVol);
-        setVolume(vol);
-        initialVolumeRef.current = vol;
-        if (audioRef.current) audioRef.current.volume = vol;
-      }
-
-      const savedLikes = localStorage.getItem("likedSongs");
-      if (savedLikes) {
-        try {
-          setLikedSongs(JSON.parse(savedLikes));
-        } catch (e) {
-          console.error(e);
+        if (Number.isFinite(vol)) {
+          const safeVolume = Math.max(0, Math.min(1, vol));
+          initialVolumeRef.current = safeVolume;
+          if (audioRef.current) audioRef.current.volume = safeVolume;
         }
       }
 
       const lastSongId = localStorage.getItem("lastSongId");
       if (lastSongId) {
-        const foundSong = songs.find((s) => s.id === parseInt(lastSongId));
+        const foundSong = songs.find((s) => s.id === Number(lastSongId));
         if (foundSong) {
-          setCurrentSong(foundSong);
-          if (audioRef.current) audioRef.current.src = foundSong.src;
+          restoreTimer = setTimeout(() => {
+            setCurrentSong(foundSong);
+            if (audioRef.current) audioRef.current.src = foundSong.src;
+          }, 0);
         }
       }
-    }, 0);
+    } catch (error) {
+      console.warn("Failed to restore audio preferences:", error);
+    }
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      if (restoreTimer) clearTimeout(restoreTimer);
     };
   }, [songs]);
 
-  // 2. Audio Listeners
+  // 3. Audio Listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -281,6 +405,7 @@ export function useAudioPlayer(songs: Song[]) {
     const onError = (e: Event) => {
       console.warn("Audio loading or decoding error:", e);
       setIsPlaying(false);
+      setAudioError("Lagu tidak dapat diputar. Coba lagi atau pilih lagu lain.");
     };
 
     audio.addEventListener("timeupdate", updateTime);
@@ -292,9 +417,9 @@ export function useAudioPlayer(songs: Song[]) {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [handleNext, repeatMode, isShuffle, safePlay]);
+  }, [handleNext, repeatMode, isShuffle, safePlay, songs]);
 
-  // 3. Sleep Timer Effect with Smooth Fade-out
+  // 4. Sleep Timer Effect with Smooth Fade-out
   useEffect(() => {
     if (sleepTimerRemaining === null || sleepTimerRemaining <= 0) return;
 
@@ -327,7 +452,7 @@ export function useAudioPlayer(songs: Song[]) {
     return () => clearInterval(interval);
   }, [sleepTimerRemaining]);
 
-  // 4. MediaSession API (Lockscreen & OS Multimedia Controls)
+  // 5. MediaSession API (Lockscreen & OS Multimedia Controls)
   useEffect(() => {
     if (typeof window === "undefined" || !("mediaSession" in navigator)) return;
 
@@ -367,12 +492,13 @@ export function useAudioPlayer(songs: Song[]) {
     }
   }, [currentSong, isPlaying, togglePlay, handlePrev, handleNext]);
 
-  // 5. KEYBOARD SHORTCUTS
+  // 6. KEYBOARD SHORTCUTS
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         (e.target as HTMLElement).tagName === "INPUT" ||
-        (e.target as HTMLElement).tagName === "TEXTAREA"
+        (e.target as HTMLElement).tagName === "TEXTAREA" ||
+        (e.target as HTMLElement).getAttribute("role") === "slider"
       ) {
         return;
       }
@@ -415,7 +541,7 @@ export function useAudioPlayer(songs: Song[]) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleVolumeChange, handleNext, handlePrev, togglePlay]);
 
-  // 6. Title
+  // 7. Title
   useEffect(() => {
     if (currentSong) {
       document.title = isPlaying
@@ -429,6 +555,8 @@ export function useAudioPlayer(songs: Song[]) {
   return {
     currentSong,
     isPlaying,
+    audioError,
+    priorityQueue,
     progress,
     duration,
     volume,
@@ -447,9 +575,18 @@ export function useAudioPlayer(songs: Song[]) {
     handlePrev,
     handleSeek,
     handleVolumeChange,
+    retryCurrentSong: () => {
+      if (!currentSong || !audioRef.current) return;
+      setAudioError(null);
+      audioRef.current.load();
+      safePlay(audioRef.current);
+    },
     toggleLike,
     toggleShuffle,
     toggleRepeat,
     setPlaylist,
+    queueSongNext,
+    removeQueuedSong,
+    moveQueuedSong,
   };
 }

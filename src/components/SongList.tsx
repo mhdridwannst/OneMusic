@@ -9,6 +9,8 @@ interface SongListProps {
   likedSongs: number[];
   onPlay: (song: Song) => void;
   onToggleLike: (song: Song) => void;
+  playlistSongIds: number[];
+  onTogglePlaylist: (song: Song) => void;
 }
 
 export default function SongList({
@@ -18,6 +20,8 @@ export default function SongList({
   likedSongs,
   onPlay,
   onToggleLike,
+  playlistSongIds,
+  onTogglePlaylist,
 }: SongListProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 md:gap-4">
@@ -32,6 +36,11 @@ export default function SongList({
           onToggleLike={(e) => {
             e.stopPropagation();
             onToggleLike(song);
+          }}
+          isInPlaylist={playlistSongIds.includes(song.id)}
+          onTogglePlaylist={(e) => {
+            e.stopPropagation();
+            onTogglePlaylist(song);
           }}
         />
       ))}

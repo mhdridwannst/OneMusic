@@ -20,6 +20,9 @@
 # production
 /build
 
+# private local audio assets; production audio belongs in object storage
+/public/music/
+
 # misc
 .DS_Store
 *.pem

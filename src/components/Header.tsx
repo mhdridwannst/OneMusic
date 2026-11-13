@@ -70,6 +70,7 @@ export default function Header({
             <input
               type="text"
               placeholder="Cari lagu, musisi, atau genre..."
+              aria-label="Cari lagu, musisi, atau genre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white/6 hover:bg-white/9 focus:bg-white/12 border border-white/10 focus:border-[#22c527]/50 rounded-2xl py-2.5 pl-10 pr-10 text-xs md:text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-[#22c527]/20 transition-all shadow-inner"
@@ -78,7 +79,8 @@ export default function Header({
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/40 hover:text-white transition"
+                aria-label="Hapus pencarian"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/40 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] rounded-full"
                 title="Hapus pencarian"
               >
                 <i className="ri-close-circle-fill text-base"></i>
@@ -91,7 +93,8 @@ export default function Header({
             {/* Keyboard Shortcuts Trigger Button */}
             <button
               onClick={() => setIsShortcutOpen(true)}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition shadow-sm"
+              aria-label="Buka pintasan keyboard"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
               title="Keyboard Shortcuts (tekan '?')"
             >
               <i className="ri-keyboard-line text-base md:text-lg"></i>
@@ -102,7 +105,8 @@ export default function Header({
               href="https://github.com/wannn-sion95/OneMusic.git"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-linear-to-tr from-[#22c527] to-cyan-500 p-0.5 cursor-pointer hover:scale-105 active:scale-95 transition shadow-lg shadow-[#22c527]/10"
+              aria-label="Buka repository OneMusic di GitHub"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-linear-to-tr from-[#22c527] to-cyan-500 p-0.5 cursor-pointer hover:scale-105 active:scale-95 transition shadow-lg shadow-[#22c527]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
               title="GitHub Repository"
             >
               <div className="w-full h-full rounded-[14px] bg-[#09090b] flex items-center justify-center overflow-hidden">

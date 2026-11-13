@@ -18,6 +18,9 @@ interface MiniPlayerProps {
   onToggleLike: () => void;
   onExpand: () => void;
   onOpenQueue?: () => void;
+  audioError?: string | null;
+  onRetry?: () => void;
+  queueCount?: number;
 }
 
 const formatTime = (seconds: number) => {
@@ -42,9 +45,12 @@ export default function MiniPlayer({
   onToggleLike,
   onExpand,
   onOpenQueue,
+  audioError,
+  onRetry,
+  queueCount = 0,
 }: MiniPlayerProps) {
   const [showVolumePopup, setShowVolumePopup] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [imageErrorSongId, setImageErrorSongId] = useState<number | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const isScrubbingRef = useRef(false);
 
@@ -83,6 +89,27 @@ export default function MiniPlayer({
     isScrubbingRef.current = false;
   };
 
+  const handleProgressBarKeyDown = (
+    e: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    e.stopPropagation();
+    if (duration <= 0) return;
+    const step = Math.max(duration / 100, 5);
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      onSeek(Math.max(0, progress - step));
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      onSeek(Math.min(duration, progress + step));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      onSeek(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      onSeek(duration);
+    }
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -103,7 +130,15 @@ export default function MiniPlayer({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="absolute top-0 left-0 right-0 h-1.5 md:h-1.5 md:hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar touch-none"
+            onKeyDown={handleProgressBarKeyDown}
+            role="slider"
+            tabIndex={0}
+            aria-label={`Progress lagu ${currentSong.title}`}
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={progress}
+            aria-valuetext={`${formatTime(progress)} dari ${formatTime(duration)}`}
+            className="absolute top-0 left-0 right-0 h-1.5 md:h-1.5 md:hover:h-2.5 bg-white/10 cursor-pointer transition-all z-20 group/bar touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527]"
             title="Geser atau sentuh untuk mengatur durasi"
           >
             <div
@@ -131,11 +166,11 @@ export default function MiniPlayer({
                   isPlaying ? "scale-105" : "scale-100"
                 } transition-transform duration-300`}
               >
-                {!imageError ? (
+                {imageErrorSongId !== currentSong.id ? (
                   <img
                     src={currentSong.cover}
                     alt={currentSong.title}
-                    onError={() => setImageError(true)}
+                    onError={() => setImageErrorSongId(currentSong.id)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -166,6 +201,19 @@ export default function MiniPlayer({
                   • {formatTime(progress)}
                 </span>
               </div>
+              {audioError && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRetry?.();
+                  }}
+                  className="text-[10px] text-amber-300 hover:text-amber-200 text-left font-semibold"
+                  title="Coba putar lagu lagi"
+                >
+                  Gagal diputar · Coba lagi
+                </button>
+              )}
             </div>
 
             {/* Quick Like Button (MiniPlayer) */}
@@ -179,6 +227,7 @@ export default function MiniPlayer({
                   ? "text-[#22c527] drop-shadow-[0_0_8px_rgba(34,197,39,0.5)]"
                   : "text-white/40 hover:text-white"
               }`}
+              aria-label={isLiked ? "Hapus dari favorit" : "Simpan ke favorit"}
               title={isLiked ? "Hapus dari Favorit" : "Simpan ke Favorit"}
             >
               <i
@@ -207,6 +256,7 @@ export default function MiniPlayer({
                   onPrev();
                 }}
                 className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"
+                aria-label="Lagu sebelumnya"
                 title="Lagu Sebelumnya"
               >
                 <i className="ri-skip-back-fill text-lg md:text-xl"></i>
@@ -223,6 +273,7 @@ export default function MiniPlayer({
                     ? "bg-[#22c527] text-black shadow-[0_0_20px_rgba(34,197,39,0.5)]"
                     : "bg-white hover:bg-[#22c527] text-black shadow-lg"
                 }`}
+                aria-label={isPlaying ? "Jeda lagu" : "Putar lagu"}
                 title={isPlaying ? "Jeda" : "Putar"}
               >
                 <i
@@ -239,6 +290,7 @@ export default function MiniPlayer({
                   onNext();
                 }}
                 className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"
+                aria-label="Lagu berikutnya"
                 title="Lagu Berikutnya"
               >
                 <i className="ri-skip-forward-fill text-lg md:text-xl"></i>
@@ -253,6 +305,7 @@ export default function MiniPlayer({
                   setShowVolumePopup((prev) => !prev);
                 }}
                 className="w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition cursor-pointer"
+                aria-label="Atur volume"
                 title="Volume"
               >
                 <i
@@ -296,10 +349,16 @@ export default function MiniPlayer({
                   e.stopPropagation();
                   onOpenQueue();
                 }}
-                className="w-8 h-8 hidden sm:flex items-center justify-center text-white/50 hover:text-white transition cursor-pointer"
+                className="relative w-8 h-8 hidden sm:flex items-center justify-center text-white/50 hover:text-white transition cursor-pointer"
+                aria-label="Buka antrean lagu"
                 title="Antrean Lagu (Up Next)"
               >
                 <i className="ri-play-list-2-line text-lg"></i>
+                {queueCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-[#22c527] text-[9px] font-black text-black flex items-center justify-center">
+                    {queueCount}
+                  </span>
+                )}
               </button>
             )}
 
@@ -310,6 +369,7 @@ export default function MiniPlayer({
                 onExpand();
               }}
               className="w-8 h-8 flex items-center justify-center text-white/50 group-hover:text-white transition cursor-pointer"
+              aria-label="Buka player penuh"
               title="Buka Player Penuh"
             >
               <i className="ri-arrow-up-s-line text-xl group-hover:-translate-y-0.5 transition-transform"></i>

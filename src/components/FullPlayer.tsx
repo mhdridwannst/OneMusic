@@ -24,11 +24,16 @@ interface FullPlayerProps {
   onToggleRepeat: () => void;
   playlist?: Song[];
   onSelectSong?: (song: Song) => void;
+  onPlayNext?: (song: Song) => void;
+  priorityQueue?: Song[];
+  onRemoveQueued?: (songId: number) => void;
+  onMoveQueued?: (index: number, direction: -1 | 1) => void;
   playbackRate?: number;
   onPlaybackRateChange?: (rate: number) => void;
   sleepTimerMinutes?: number | null;
   sleepTimerRemaining?: number | null;
   onSetSleepTimer?: (minutes: number | null) => void;
+  onShare?: () => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -77,17 +82,23 @@ export default function FullPlayer({
   onToggleRepeat,
   playlist = [],
   onSelectSong,
+  onPlayNext,
+  priorityQueue = [],
+  onRemoveQueued,
+  onMoveQueued,
   playbackRate = 1,
   onPlaybackRateChange,
   sleepTimerMinutes = null,
   sleepTimerRemaining = null,
   onSetSleepTimer,
+  onShare,
 }: FullPlayerProps) {
   const [lyrics, setLyrics] = useState<{ time: number; content: string }[]>([]);
   const [activeRightTab, setActiveRightTab] = useState<"lyrics" | "queue">("lyrics");
+  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [imageErrorSongId, setImageErrorSongId] = useState<number | null>(null);
 
   const lyricRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +117,7 @@ export default function FullPlayer({
   // Fetch LRC
   useEffect(() => {
     let ignore = false;
-    if (!currentSong?.lrc) {
+    if (!showDetailsPanel || activeRightTab !== "lyrics" || !currentSong?.lrc) {
       Promise.resolve().then(() => {
         if (!ignore) setLyrics([]);
       });
@@ -125,7 +136,7 @@ export default function FullPlayer({
     return () => {
       ignore = true;
     };
-  }, [currentSong?.lrc]);
+  }, [activeRightTab, currentSong?.lrc, showDetailsPanel]);
 
   // Derived state untuk active lyric index
   const activeLyricIndex = useMemo(() => {
@@ -176,6 +187,27 @@ export default function FullPlayer({
     isDraggingSeek.current = false;
   };
 
+  const handleProgressBarKeyDown = (
+    e: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    e.stopPropagation();
+    if (duration <= 0) return;
+    const step = Math.max(duration / 100, 5);
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      onSeek(Math.max(0, progress - step));
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      onSeek(Math.min(duration, progress + step));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      onSeek(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      onSeek(duration);
+    }
+  };
+
   const handleVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -206,6 +238,9 @@ export default function FullPlayer({
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 240 }}
           className="fixed inset-0 z-100 bg-[#09090b] text-white flex flex-col h-dvh select-none"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Player: ${currentSong.title}`}
         >
           {/* DYNAMIC AMBIENT BACKDROP */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -228,6 +263,7 @@ export default function FullPlayer({
               onClick={onClose}
               className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center active:scale-90 transition cursor-pointer"
               title="Tutup Player"
+              aria-label="Tutup player"
             >
               <i className="ri-arrow-down-s-line text-2xl"></i>
             </button>
@@ -349,6 +385,9 @@ export default function FullPlayer({
                 onClick={onToggleLike}
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center active:scale-90 transition cursor-pointer"
                 title="Favorit"
+                aria-label={
+                  isLiked ? "Hapus lagu dari favorit" : "Tambahkan lagu ke favorit"
+                }
               >
                 <i
                   className={`text-xl ${
@@ -357,6 +396,38 @@ export default function FullPlayer({
                       : "ri-heart-3-line text-white/70"
                   }`}
                 ></i>
+              </button>
+              {onShare && (
+                <button
+                  onClick={onShare}
+                  className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center active:scale-90 transition cursor-pointer"
+                  title="Bagikan lagu"
+                  aria-label="Bagikan lagu"
+                >
+                  <i className="ri-share-forward-line text-lg text-white/70"></i>
+                </button>
+              )}
+              <button
+                onClick={() => setShowDetailsPanel((visible) => !visible)}
+                className={`h-10 px-3 rounded-full border flex items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
+                  showDetailsPanel
+                    ? "bg-[#22c527]/15 border-[#22c527]/40 text-[#22c527]"
+                    : "bg-white/5 hover:bg-white/15 border-white/10 text-white/70 hover:text-white"
+                }`}
+                title={
+                  showDetailsPanel
+                    ? "Sembunyikan lirik dan antrean"
+                    : "Tampilkan lirik dan antrean"
+                }
+                aria-label={
+                  showDetailsPanel
+                    ? "Sembunyikan lirik dan antrean"
+                    : "Tampilkan lirik dan antrean"
+                }
+                aria-pressed={showDetailsPanel}
+              >
+                <i className="ri-layout-right-line text-base"></i>
+                <span className="hidden sm:inline">Lirik & Queue</span>
               </button>
             </div>
           </motion.div>
@@ -369,11 +440,11 @@ export default function FullPlayer({
                 <div className="flex-none w-full max-w-md lg:w-115 flex flex-col">
                   {/* COVER ART WITH VINYL RIM LIGHT */}
                   <div className="w-[82%] max-w-75 sm:max-w-85 lg:w-full aspect-square mx-auto rounded-3xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.8)] border border-white/12 mb-6 relative group bg-[#151518] ring-1 ring-inset ring-white/10">
-                    {!imageError ? (
+                    {imageErrorSongId !== currentSong.id ? (
                       <img
                         src={currentSong.cover}
                         alt={currentSong.title}
-                        onError={() => setImageError(true)}
+                        onError={() => setImageErrorSongId(currentSong.id)}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
@@ -425,7 +496,15 @@ export default function FullPlayer({
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
-                    className="w-full mb-3 cursor-pointer group py-2 touch-none"
+                    onKeyDown={handleProgressBarKeyDown}
+                    role="slider"
+                    tabIndex={0}
+                    aria-label={`Progress lagu ${currentSong.title}`}
+                    aria-valuemin={0}
+                    aria-valuemax={duration}
+                    aria-valuenow={progress}
+                    aria-valuetext={`${formatTime(progress)} dari ${formatTime(duration)}`}
+                    className="w-full mb-3 cursor-pointer group py-2 touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg"
                     title="Sentuh atau geser untuk melompat durasi"
                   >
                     <div className="w-full h-1.5 group-hover:h-2.5 bg-white/15 rounded-full overflow-hidden transition-all relative">
@@ -547,7 +626,8 @@ export default function FullPlayer({
                   </div>
                 </div>
 
-                {/* BAGIAN 2: PANEL LIRIK & UP NEXT */}
+                {/* BAGIAN 2: PANEL LIRIK & UP NEXT (OPSIONAL) */}
+                {showDetailsPanel && (
                 <div className="flex-none w-full max-w-md lg:max-w-none lg:w-115 h-64 sm:h-76 lg:h-140 flex flex-col bg-white/3 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-xl mt-2 lg:mt-0 shadow-2xl">
                   {/* TAB SWITCHER */}
                   <div className="flex items-center justify-between p-3 border-b border-white/5 bg-black/25">
@@ -571,7 +651,7 @@ export default function FullPlayer({
                         }`}
                       >
                         <i className="ri-play-list-2-line mr-1.5"></i> Up Next (
-                        {playlist.length})
+                        {priorityQueue.length + playlist.length})
                       </button>
                     </div>
 
@@ -634,6 +714,72 @@ export default function FullPlayer({
                   {/* TAB CONTENT: UP NEXT QUEUE */}
                   {activeRightTab === "queue" && (
                     <div className="w-full flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
+                      {priorityQueue.length > 0 && (
+                        <section className="mb-3">
+                          <div className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#22c527]">
+                            Putar berikutnya
+                          </div>
+                          <div className="space-y-2">
+                            {priorityQueue.map((item, idx) => (
+                              <div
+                                key={`priority-${item.id}`}
+                                className="flex items-center gap-2 p-2 rounded-2xl bg-[#22c527]/10 border border-[#22c527]/25"
+                              >
+                                <span className="w-5 text-center text-xs font-mono text-[#22c527]">
+                                  {idx + 1}
+                                </span>
+                                <img
+                                  src={item.cover}
+                                  alt={item.title}
+                                  className="w-10 h-10 rounded-xl object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-xs font-bold truncate text-white">
+                                    {item.title}
+                                  </h5>
+                                  <p className="text-[11px] text-white/50 truncate">
+                                    {item.artist}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {onMoveQueued && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={idx === 0}
+                                        onClick={() => onMoveQueued(idx, -1)}
+                                        className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
+                                        aria-label={`Naikkan ${item.title}`}
+                                      >
+                                        <i className="ri-arrow-up-s-line"></i>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={idx === priorityQueue.length - 1}
+                                        onClick={() => onMoveQueued(idx, 1)}
+                                        className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
+                                        aria-label={`Turunkan ${item.title}`}
+                                      >
+                                        <i className="ri-arrow-down-s-line"></i>
+                                      </button>
+                                    </>
+                                  )}
+                                  {onRemoveQueued && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onRemoveQueued(item.id)}
+                                      className="w-7 h-7 rounded-full text-white/50 hover:bg-red-400/20 hover:text-red-200"
+                                      aria-label={`Hapus ${item.title} dari antrean`}
+                                    >
+                                      <i className="ri-close-line"></i>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
                       {playlist.map((item, idx) => {
                         const isCurrent = item.id === currentSong.id;
                         return (
@@ -654,6 +800,20 @@ export default function FullPlayer({
                               alt={item.title}
                               className="w-10 h-10 rounded-xl object-cover"
                             />
+                            {onPlayNext && !isCurrent && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onPlayNext(item);
+                                }}
+                                className="ml-auto w-8 h-8 rounded-full bg-white/5 hover:bg-[#22c527] hover:text-black flex items-center justify-center text-white/60 transition"
+                                title="Putar berikutnya"
+                                aria-label={`Putar ${item.title} berikutnya`}
+                              >
+                                <i className="ri-skip-forward-mini-line"></i>
+                              </button>
+                            )}
                             <div className="flex-1 min-w-0">
                               <h5
                                 className={`text-xs font-bold truncate ${
@@ -679,6 +839,7 @@ export default function FullPlayer({
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </div>
           </div>

@@ -11,17 +11,26 @@ export default function HeroSection({ song, onPlay }: HeroSectionProps) {
   return (
     <div className="mb-8">
       <div
-        className="relative w-full h-48 md:h-72 rounded-3xl overflow-hidden group cursor-pointer shadow-2xl ring-1 ring-white/10"
+        role="button"
+        tabIndex={0}
+        aria-label={`Putar lagu unggulan ${song.title} oleh ${song.artist}`}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onPlay();
+          }
+        }}
+        className="premium-surface relative w-full h-48 md:h-72 rounded-3xl overflow-hidden group cursor-pointer shadow-2xl ring-1 ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
         onClick={onPlay}
       >
         <img
           src={song.cover}
-          alt="Hero"
+          alt={`${song.title} oleh ${song.artist}`}
           className="w-full h-full object-cover object-center transition duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/50 to-transparent flex flex-col justify-center pl-6 md:pl-12">
           <span className="text-[#22c527] text-[10px] md:text-sm font-bold tracking-widest mb-3 uppercase bg-black/60 w-fit px-3 py-1 rounded-full backdrop-blur-md border border-white/5">
-            Featured Today
+            Pilihan Hari Ini
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight truncate max-w-[85%] drop-shadow-2xl">
             {song.title}
