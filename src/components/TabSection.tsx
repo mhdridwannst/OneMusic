@@ -21,6 +21,7 @@ export const CATEGORIES = [
   { id: "R&B / Soul", label: "R&B / Soul", icon: "ri-sparkling-fill" },
   { id: "Lo-Fi / Ambient", label: "Lo-Fi / Chill", icon: "ri-moon-clear-fill" },
   { id: "Indonesian Hits", label: "Indo Pop", icon: "ri-flag-fill" },
+  { id: "K-Pop", label: "K-Pop", icon: "ri-disc-line" },
 ];
 
 export default function TabSection({

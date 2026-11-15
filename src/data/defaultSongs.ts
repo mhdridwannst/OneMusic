@@ -869,10 +869,10 @@ const localSongs: Song[] = [
   },
   {
     id: 98,
-    title: "bye [Altare Remix]",
+    title: "Bye [Altare Remix]",
     artist: "Ariana Grande",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/bye.jpg",
     src: "/music/Ariana Grande - bye Altare Remix.mp3",
   },
   {
@@ -880,7 +880,7 @@ const localSongs: Song[] = [
     title: "Runaway",
     artist: "Aurora",
     genre: "Pop / Indie",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/runaway.jpg",
     src: "/music/Aurora - Runaway.mp3",
   },
   {
@@ -888,7 +888,7 @@ const localSongs: Song[] = [
     title: "Build A Bitch",
     artist: "Bella Poarch",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/bab.jpg",
     src: "/music/Bella Poarch - Build A Bitch.mp3",
   },
   {
@@ -896,7 +896,7 @@ const localSongs: Song[] = [
     title: "A Thousand Years",
     artist: "Christina Perri",
     genre: "Pop / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/aty.jpg",
     src: "/music/Christina Perri - A Thousand Years.mp3",
   },
   {
@@ -904,7 +904,7 @@ const localSongs: Song[] = [
     title: "End Of Beginning",
     artist: "Djo",
     genre: "Indie / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/eob.jpg",
     src: "/music/Djo - End Of Beginning (Official Audio) - Djo Music.mp3",
   },
   {
@@ -912,7 +912,7 @@ const localSongs: Song[] = [
     title: "Sign of the Times",
     artist: "Harry Styles",
     genre: "Pop / Rock",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/sotm.jpg",
     src: "/music/Harry Styles - Sign of the Times.mp3",
   },
   {
@@ -920,7 +920,7 @@ const localSongs: Song[] = [
     title: "Somewhere Only We Know",
     artist: "Keane",
     genre: "Indie / Rock",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/sowk.jpg",
     src: "/music/Keane - Somewhere Only We Know.mp3",
   },
   {
@@ -928,7 +928,7 @@ const localSongs: Song[] = [
     title: "The Night We Met",
     artist: "Lord Huron",
     genre: "Indie / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/tnwm.jpg",
     src: "/music/Lord Huron - The Night We Met.mp3",
   },
   {
@@ -936,23 +936,23 @@ const localSongs: Song[] = [
     title: "Multo",
     artist: "Cup of Joe",
     genre: "Pop / Indie",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/multo.jpg",
     src: "/music/Multo - Cup of Joe.mp3",
   },
   {
     id: 107,
-    title: "lowkey",
+    title: "Lowkey",
     artist: "NIKI",
     genre: "R&B / Soul",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/lowkey.jpg",
     src: "/music/NIKI - lowkey.mp3",
   },
   {
     id: 108,
-    title: "bergema sampai selamanya",
+    title: "Bergema sampai selamanya",
     artist: "Nadhif Basalamah",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/bss.jpg",
     src: "/music/Nadhif Basalamah - bergema sampai selamanya.mp3",
   },
   {
@@ -960,7 +960,7 @@ const localSongs: Song[] = [
     title: "Those Eyes",
     artist: "New West",
     genre: "Pop / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/te.jpg",
     src: "/music/New West - Those Eyes.mp3",
   },
   {
@@ -968,7 +968,7 @@ const localSongs: Song[] = [
     title: "Night Changes",
     artist: "One Direction",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/nc.jpg",
     src: "/music/One Direction - Night Changes.mp3",
   },
   {
@@ -976,7 +976,7 @@ const localSongs: Song[] = [
     title: "Kita Lewati Berdua",
     artist: "Overnight",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/klb.jpg",
     src: "/music/Overnight - Kita Lewati Berdua.mp3",
   },
   {
@@ -984,7 +984,7 @@ const localSongs: Song[] = [
     title: "P.S. I LOVE YOU",
     artist: "Paul Partohap",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/psi.jpg",
     src: "/music/Paul Partohap - P.S. I LOVE YOU.mp3",
   },
   {
@@ -992,7 +992,7 @@ const localSongs: Song[] = [
     title: "At My Worst",
     artist: "Pink Sweat$ feat. Kehlani",
     genre: "R&B / Soul",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/amw.jpg",
     src: "/music/Pink Sweat - At My Worst (feat.Kehlani).mp3",
   },
   {
@@ -1000,7 +1000,7 @@ const localSongs: Song[] = [
     title: "APT.",
     artist: "ROSÉ & Bruno Mars",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/apt.jpg",
     src: "/music/rose-bruno-apt.mp3",
   },
   {
@@ -1008,7 +1008,7 @@ const localSongs: Song[] = [
     title: "No Surprises",
     artist: "Radiohead",
     genre: "Indie / Rock",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/ns.jpg",
     src: "/music/Radiohead - No Surprises.mp3",
   },
   {
@@ -1016,7 +1016,7 @@ const localSongs: Song[] = [
     title: "Bunga Abadi",
     artist: "Rio Clappy",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/ba.jpg",
     src: "/music/Rio Clappy - Bunga Abadi.mp3",
   },
   {
@@ -1024,7 +1024,7 @@ const localSongs: Song[] = [
     title: "LDR",
     artist: "Shoti",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/ldr.jpg",
     src: "/music/Shoti - LDR.mp3",
   },
   {
@@ -1032,7 +1032,7 @@ const localSongs: Song[] = [
     title: "Until I Found You",
     artist: "Stephen Sanchez",
     genre: "Pop / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/uify.jpg",
     src: "/music/Stephen Sanchez - Until I Found You.mp3",
   },
   {
@@ -1040,7 +1040,7 @@ const localSongs: Song[] = [
     title: "Pasilyo",
     artist: "SunKissed Lola",
     genre: "Indie / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/pasilyo.jpg",
     src: "/music/SunKissed Lola - Pasilyo.mp3",
   },
   {
@@ -1048,7 +1048,7 @@ const localSongs: Song[] = [
     title: "Bunga Maaf",
     artist: "The Lantis",
     genre: "Indonesian Hits",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/bm.jpg",
     src: "/music/The Lantis - Bunga Maaf.mp3",
   },
   {
@@ -1056,7 +1056,7 @@ const localSongs: Song[] = [
     title: "Dusk Till Dawn",
     artist: "ZAYN & Sia",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/dtd.jpg",
     src: "/music/ZAYN & Sia - Dusk Till Dawn.mp3",
   },
   {
@@ -1064,7 +1064,7 @@ const localSongs: Song[] = [
     title: "Glue Song",
     artist: "beabadoobee feat. Clairo",
     genre: "Indie / Acoustic",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/glue.jpg",
     src: "/music/beabadoobee ft. Clairo - Glue Song.mp3",
   },
   {
@@ -1072,7 +1072,7 @@ const localSongs: Song[] = [
     title: "Here With Me",
     artist: "d4vd",
     genre: "R&B / Soul",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/hwm.jpg",
     src: "/music/d4vd - Here With Me.mp3",
   },
   {
@@ -1080,7 +1080,7 @@ const localSongs: Song[] = [
     title: "LIMBO",
     artist: "keshi",
     genre: "R&B / Soul",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/limbo.jpg",
     src: "/music/keshi - LIMBO.mp3",
   },
   {
@@ -1088,7 +1088,7 @@ const localSongs: Song[] = [
     title: "Blinding Lights",
     artist: "The Weeknd",
     genre: "Pop",
-    cover: "/images/new-release-cover.svg",
+    cover: "/images/blinding-lights.jpg",
     src: "/music/The Weeknd - Blinding Lights.mp3",
   },
 ];
