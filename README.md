@@ -4,7 +4,7 @@
 
 # One<span style="color:#22c527">Music</span>
 
-**Pemutar musik web pribadi dengan pengalaman audio yang imersif, cepat, dan nyaman di semua perangkat.**
+**Semua musik favoritmu dalam satu platform modern. Nikmati pengalaman mendengarkan lagu yang cepat, jernih, dan bebas hambatan langsung dari browser.**
 
 <p>
   <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 16" />
