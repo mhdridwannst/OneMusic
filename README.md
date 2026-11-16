@@ -2,8 +2,6 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:09090b,100:22c527&height=190&section=header&text=OneMusic&fontSize=58&fontColor=ffffff&fontAlignY=40" width="100%" alt="OneMusic" />
 
-# One<span style="color:#22c527">Music</span>
-
 **Semua musik favoritmu dalam satu platform modern. Nikmati pengalaman mendengarkan lagu yang cepat, jernih, dan bebas hambatan langsung dari browser.**
 
 <p>
