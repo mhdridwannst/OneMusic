@@ -8,10 +8,14 @@ import { defaultSongs } from "@/data/defaultSongs";
 // KOMPONEN UI
 import Header from "@/components/Header";
 import HeroCarousel from "@/components/HeroCarousel";
+import QuickPicks from "@/components/QuickPicks";
+import SongRowSection from "@/components/SongRowSection";
 import RecentlyPlayed from "@/components/RecentlyPlayed";
 import RecommendationSection from "@/components/RecommendationSection";
 import TabSection from "@/components/TabSection";
 import SongList from "@/components/SongList";
+import SongTableView from "@/components/SongTableView";
+import ScrollToTop from "@/components/ScrollToTop";
 import Footer from "@/components/Footer";
 import MiniPlayer from "@/components/MiniPlayer";
 import FullPlayer from "@/components/FullPlayer";
@@ -32,6 +36,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"default" | "title" | "artist">(
     "default",
   );
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -212,7 +217,14 @@ export default function Home() {
               "jung kook",
               "fifty fifty",
               "leehi",
+              "rosé",
+              "rose",
             ].some((art) => song.artist.toLowerCase().includes(art));
+        } else if (tab === "j-pop") {
+          matchesTab =
+            songGenre.includes("j-pop") ||
+            songGenre.includes("japan") ||
+            ["yoasobi"].some((art) => song.artist.toLowerCase().includes(art));
         } else if (tab === "indonesian hits") {
           matchesTab =
             songGenre.includes("indo") ||
@@ -345,6 +357,90 @@ export default function Home() {
     triggerToast(`Memutar ${displayedSongs.length} lagu dari Playlist Saya`);
   };
 
+  const handleShuffleAll = () => {
+    if (displayedSongs.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * displayedSongs.length);
+    player.playSong(displayedSongs[randomIndex]);
+    if (!player.isShuffle) {
+      player.toggleShuffle();
+    }
+    triggerToast("Memutar acak lagu 🔀");
+  };
+
+  // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
+  const trendingHits = useMemo(() => {
+    const viralIds = [114, 125, 77, 73, 87, 72, 63, 74, 70, 95, 27, 28, 88, 78, 102, 110];
+    return songs.filter((s) => viralIds.includes(s.id));
+  }, [songs]);
+
+  const indonesianHitsRow = useMemo(() => {
+    return songs
+      .filter((s) => {
+        const g = (s.genre || "").toLowerCase();
+        return (
+          g.includes("indo") ||
+          [
+            "tulus",
+            "payung teduh",
+            "nadhif",
+            "rio clappy",
+            "the lantis",
+            "enau",
+            "raim laode",
+            "fariz",
+            "paul partohap",
+            "rizky febian",
+            "kunto aji",
+          ].some((a) => s.artist.toLowerCase().includes(a))
+        );
+      })
+      .slice(0, 16);
+  }, [songs]);
+
+  const asianWaveRow = useMemo(() => {
+    return songs
+      .filter((s) => {
+        const g = (s.genre || "").toLowerCase();
+        return (
+          g.includes("k-pop") ||
+          g.includes("j-pop") ||
+          [
+            "bts",
+            "twice",
+            "illit",
+            "jung kook",
+            "fifty fifty",
+            "leehi",
+            "yoasobi",
+            "rose",
+          ].some((a) => s.artist.toLowerCase().includes(a))
+        );
+      })
+      .slice(0, 16);
+  }, [songs]);
+
+  const chillAcousticRow = useMemo(() => {
+    return songs
+      .filter((s) => {
+        const g = (s.genre || "").toLowerCase();
+        return (
+          g.includes("lo-fi") ||
+          g.includes("acoustic") ||
+          g.includes("ambient") ||
+          [
+            "cigarettes after sex",
+            "keshi",
+            "d4vd",
+            "wave to earth",
+            "laufey",
+            "stephen sanchez",
+            "beabadoobee",
+          ].some((a) => s.artist.toLowerCase().includes(a))
+        );
+      })
+      .slice(0, 16);
+  }, [songs]);
+
   // --- LOADING SCREEN DENGAN SKELETON LOADER MEWAH ---
   if (isLoading) {
     return <SkeletonLoader />;
@@ -408,6 +504,16 @@ export default function Home() {
             />
           )}
 
+          {/* Quick Picks Mini Tiles (Gaya Spotify Home) */}
+          {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (
+            <QuickPicks
+              songs={songs}
+              currentSong={player.currentSong}
+              isPlaying={player.isPlaying}
+              onPlay={player.playSong}
+            />
+          )}
+
           {/* Section Baru Saja Diputar (Recently Played) */}
           {!searchTerm && activeTab === "All Songs" && recentlyPlayed.length > 0 && (
             <RecentlyPlayed
@@ -428,6 +534,66 @@ export default function Home() {
             />
           )}
 
+          {/* CURATED HORIZONTAL SNAP ROWS (SPOTIFY STYLE) */}
+          {!searchTerm && activeTab === "All Songs" && (
+            <>
+              {/* Row 1: Viral & Trending */}
+              <SongRowSection
+                title="Sedang Hangat & Viral"
+                subtitle="Lagu-lagu hits terpopuler pilihan pendengar"
+                icon="ri-fire-fill"
+                songs={trendingHits}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+              />
+
+              {/* Row 2: Indonesian Hits */}
+              <SongRowSection
+                title="Hits Terbaik Indonesia"
+                subtitle="Karya musisi tanah air paling berkesan"
+                icon="ri-flag-fill"
+                songs={indonesianHitsRow}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                onViewAll={() => setActiveTab("Indonesian Hits")}
+              />
+
+              {/* Row 3: Asian & K-Pop Wave */}
+              <SongRowSection
+                title="K-Pop & Asian Wave"
+                subtitle="Irama memukau dari Korea & Jepang"
+                icon="ri-sparkling-fill"
+                songs={asianWaveRow}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                onViewAll={() => setActiveTab("K-Pop")}
+              />
+
+              {/* Row 4: Chill & Lo-Fi Night */}
+              <SongRowSection
+                title="Chill, Lo-Fi & Akustik"
+                subtitle="Teman setia saat santai, belajar, atau istirahat malam"
+                icon="ri-moon-clear-fill"
+                songs={chillAcousticRow}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                onViewAll={() => setActiveTab("Lo-Fi / Ambient")}
+              />
+            </>
+          )}
+
           {/* Tab & Sort Section */}
           <TabSection
             activeTab={activeTab}
@@ -438,6 +604,9 @@ export default function Home() {
             playlistCount={playlistSongIds.length}
             onClearPlaylist={handleClearPlaylist}
             onPlayAll={handlePlayAllPlaylist}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onShuffleAll={handleShuffleAll}
           />
 
           <div className="flex items-end justify-between gap-4 mb-4 px-1">
@@ -523,18 +692,31 @@ export default function Home() {
             </div>
           )}
 
-          {/* List Lagu Grid Cards */}
+          {/* List Lagu: Pilihan Grid Card vs Compact Spotify Table List */}
           {displayedSongs.length > 0 && (
-            <SongList
-              songs={displayedSongs}
-              currentSong={player.currentSong}
-              isPlaying={player.isPlaying}
-              likedSongs={player.likedSongs}
-              onPlay={player.playSong}
-              onToggleLike={handleToggleLikeSong}
-              playlistSongIds={playlistSongIds}
-              onTogglePlaylist={handleTogglePlaylist}
-            />
+            viewMode === "list" ? (
+              <SongTableView
+                songs={displayedSongs}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
+              />
+            ) : (
+              <SongList
+                songs={displayedSongs}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
+              />
+            )
           )}
 
           <Footer />
@@ -640,6 +822,9 @@ export default function Home() {
           }
         }}
       />
+
+      {/* Floating Scroll to Top Button */}
+      <ScrollToTop />
     </main>
   );
 }

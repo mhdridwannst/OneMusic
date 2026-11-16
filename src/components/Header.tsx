@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 
 interface HeaderProps {
@@ -13,6 +13,7 @@ export default function Header({
   totalSongsCount = 0,
 }: HeaderProps) {
   const [isShortcutOpen, setIsShortcutOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -24,11 +25,27 @@ export default function Header({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
+
+      if (e.key === "/" && !e.shiftKey && !isInputFocused) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if (e.key === "Escape") {
+        if (isInputFocused) {
+          (activeEl as HTMLElement).blur();
+        }
+        setIsShortcutOpen(false);
+        return;
+      }
+
+      if (isInputFocused) return;
+
       if (e.key === "?" || (e.shiftKey && e.key === "/")) {
         setIsShortcutOpen((prev) => !prev);
-      } else if (e.key === "Escape") {
-        setIsShortcutOpen(false);
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -68,8 +85,9 @@ export default function Header({
             </div>
 
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Cari lagu, musisi, atau genre..."
+              placeholder="Cari lagu, musisi, atau genre... (tekan '/')"
               aria-label="Cari lagu, musisi, atau genre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

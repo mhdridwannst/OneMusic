@@ -12,6 +12,8 @@ const shortcuts = [
   { key: "J / L", desc: "Mundur 5 detik / Maju 5 detik" },
   { key: "↑ / ↓", desc: "Naikkan / Turunkan volume" },
   { key: "M", desc: "Mute / Unmute audio" },
+  { key: "/", desc: "Fokus ke kolom pencarian lagu" },
+  { key: "Esc", desc: "Tutup player / batal pencarian" },
   { key: "?", desc: "Buka / Tutup panduan shortcut ini" },
 ];
 

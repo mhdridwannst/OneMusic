@@ -95,7 +95,7 @@ export default function FullPlayer({
 }: FullPlayerProps) {
   const [lyrics, setLyrics] = useState<{ time: number; content: string }[]>([]);
   const [activeRightTab, setActiveRightTab] = useState<"lyrics" | "queue">("lyrics");
-  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
+  const [showDetailsPanel, setShowDetailsPanel] = useState(true);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
   const [imageErrorSongId, setImageErrorSongId] = useState<number | null>(null);
@@ -108,16 +108,22 @@ export default function FullPlayer({
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    const checkDesktop = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+      if (desktop) {
+        setShowDetailsPanel(true);
+      }
+    };
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
-  // Fetch LRC
+  // Fetch LRC (Pre-fetch agar lirik instan siap saat dibuka)
   useEffect(() => {
     let ignore = false;
-    if (!showDetailsPanel || activeRightTab !== "lyrics" || !currentSong?.lrc) {
+    if (!currentSong?.lrc) {
       Promise.resolve().then(() => {
         if (!ignore) setLyrics([]);
       });
@@ -136,7 +142,7 @@ export default function FullPlayer({
     return () => {
       ignore = true;
     };
-  }, [activeRightTab, currentSong?.lrc, showDetailsPanel]);
+  }, [currentSong?.lrc]);
 
   // Derived state untuk active lyric index
   const activeLyricIndex = useMemo(() => {
@@ -701,10 +707,31 @@ export default function FullPlayer({
                           );
                         })
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-40 opacity-50 text-center">
-                          <i className="ri-music-2-line text-4xl mb-2 text-white/60"></i>
-                          <p className="text-sm font-bold">Lirik Belum Tersedia / Instrumental</p>
-                          <p className="text-xs text-white/40 mt-1">Nikmati irama musiknya</p>
+                        <div className="flex flex-col items-center justify-center my-auto py-12 text-center select-none">
+                          <div className="relative mb-5">
+                            <div
+                              className={`w-24 h-24 rounded-full border border-white/15 bg-gradient-to-br from-neutral-800 via-neutral-900 to-black flex items-center justify-center shadow-2xl shadow-black ${
+                                isPlaying ? "animate-spin-slow" : ""
+                              }`}
+                            >
+                              <div className="w-9 h-9 rounded-full bg-[#22c527]/15 border border-[#22c527]/40 flex items-center justify-center text-[#22c527] shadow-inner">
+                                <i className="ri-disc-fill text-xl"></i>
+                              </div>
+                            </div>
+                            {isPlaying && (
+                              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg">
+                                <span className="w-0.5 h-3 bg-[#22c527] rounded-full animate-music-bar-1"></span>
+                                <span className="w-0.5 h-4.5 bg-[#22c527] rounded-full animate-music-bar-2"></span>
+                                <span className="w-0.5 h-2 bg-[#22c527] rounded-full animate-music-bar-3"></span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-white/90">
+                            Lirik Instrumental / Audio
+                          </p>
+                          <p className="text-xs text-white/40 mt-1 max-w-xs">
+                            Nikmati alunan irama dan suasana musiknya
+                          </p>
                         </div>
                       )}
                       <div className="h-20 lg:h-50"></div>

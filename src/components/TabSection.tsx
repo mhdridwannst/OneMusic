@@ -10,6 +10,9 @@ interface TabSectionProps {
   playlistCount?: number;
   onClearPlaylist?: () => void;
   onPlayAll?: () => void;
+  viewMode?: "grid" | "list";
+  onViewModeChange?: (mode: "grid" | "list") => void;
+  onShuffleAll?: () => void;
 }
 
 export const CATEGORIES = [
@@ -22,6 +25,7 @@ export const CATEGORIES = [
   { id: "Lo-Fi / Ambient", label: "Lo-Fi / Chill", icon: "ri-moon-clear-fill" },
   { id: "Indonesian Hits", label: "Indo Pop", icon: "ri-flag-fill" },
   { id: "K-Pop", label: "K-Pop", icon: "ri-disc-line" },
+  { id: "J-Pop", label: "J-Pop", icon: "ri-sparkling-2-line" },
 ];
 
 export default function TabSection({
@@ -33,6 +37,9 @@ export default function TabSection({
   playlistCount = 0,
   onClearPlaylist,
   onPlayAll,
+  viewMode = "grid",
+  onViewModeChange,
+  onShuffleAll,
 }: TabSectionProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
@@ -122,10 +129,23 @@ export default function TabSection({
           </button>
           </>
         )}
+        {/* SHUFFLE ALL BUTTON */}
+        {onShuffleAll && (
+          <button
+            type="button"
+            onClick={onShuffleAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-[#22c527] hover:text-black border border-white/10 text-white text-xs font-bold transition cursor-pointer"
+            title="Putar acak semua lagu"
+          >
+            <i className="ri-shuffle-line"></i>
+            <span className="hidden sm:inline">Acak</span>
+          </button>
+        )}
+
         {/* CUSTOM GLASS SORT DROPDOWN */}
         <div className="relative flex items-center gap-2 text-xs text-white/60 bg-white/5 hover:bg-white/8 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md transition shadow-sm">
           <i className="ri-sort-desc text-[#22c527]"></i>
-          <span className="text-white/40">Urutkan:</span>
+          <span className="text-white/40 hidden sm:inline">Urutkan:</span>
           <select
             value={sortBy}
             onChange={(e) =>
@@ -139,6 +159,38 @@ export default function TabSection({
             <option value="artist" className="bg-[#18181b] text-white">Artis (A-Z)</option>
           </select>
         </div>
+
+        {/* VIEW MODE SWITCHER (GRID VS LIST TABLE) */}
+        {onViewModeChange && (
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5 shadow-sm">
+            <button
+              type="button"
+              onClick={() => onViewModeChange("grid")}
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer ${
+                viewMode === "grid"
+                  ? "bg-[#22c527] text-black shadow-sm"
+                  : "text-white/50 hover:text-white"
+              }`}
+              title="Tampilan Grid Kartu"
+              aria-label="Tampilan Grid Kartu"
+            >
+              <i className="ri-grid-fill text-xs"></i>
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange("list")}
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-[#22c527] text-black shadow-sm"
+                  : "text-white/50 hover:text-white"
+              }`}
+              title="Tampilan List Compact Spotify"
+              aria-label="Tampilan List Compact Spotify"
+            >
+              <i className="ri-list-check text-xs"></i>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

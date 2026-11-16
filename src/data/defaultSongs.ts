@@ -810,6 +810,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/cheating-on-you.jpg",
     src: "/music/Charlie Puth - Cheating on You.mp3",
+    lrc: "/lyrics/cheating-on-you.lrc",
   },
   {
     id: 91,
@@ -818,6 +819,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/we-dont-talk-anymore.jpg",
     src: "/music/Charlie Puth ft Selena Gomez - We Don't Talk Anymore.mp3",
+    lrc: "/lyrics/we-dont-talk-anymore.lrc",
   },
   {
     id: 92,
@@ -826,6 +828,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/sakura.jpg",
     src: "/music/Fariz RM - Sakura (Cover By The 90s Mates).mp3",
+    lrc: "/lyrics/sakura.lrc",
   },
   {
     id: 93,
@@ -834,6 +837,7 @@ const localSongs: Song[] = [
     genre: "Indie / Acoustic",
     cover: "/images/know-me-too-well.jpg",
     src: "/music/New Hope Club - Know Me Too Well.mp3",
+    lrc: "/lyrics/know-me-too-well.lrc",
   },
   {
     id: 94,
@@ -842,6 +846,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/garam-madu.jpg",
     src: "/music/Tenxi, Naykilla & Jemsii - Garam & Madu.mp3",
+    lrc: "/lyrics/garam-madu.lrc",
   },
   {
     id: 95,
@@ -850,6 +855,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/stay.jpg",
     src: "/music/The Kid LAROI, Justin Bieber - STAY.mp3",
+    lrc: "/lyrics/stay.lrc",
   },
   {
     id: 96,
@@ -858,6 +864,7 @@ const localSongs: Song[] = [
     genre: "J-Pop",
     cover: "/images/yoasobi-ano-yume.jpg",
     src: "/music/yoasobi-ano-yume-wo-nazotte.mp3",
+    lrc: "/lyrics/yoasobi-ano-yume.lrc",
   },
   {
     id: 97,
@@ -866,6 +873,7 @@ const localSongs: Song[] = [
     genre: "J-Pop",
     cover: "/images/yoasobi-tabun.jpg",
     src: "/music/yoasobi-tabun.mp3",
+    lrc: "/lyrics/yoasobi-tabun.lrc",
   },
   {
     id: 98,
@@ -874,6 +882,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/bye.jpg",
     src: "/music/Ariana Grande - bye Altare Remix.mp3",
+    lrc: "/lyrics/bye.lrc",
   },
   {
     id: 99,
@@ -882,6 +891,7 @@ const localSongs: Song[] = [
     genre: "Pop / Indie",
     cover: "/images/runaway.jpg",
     src: "/music/Aurora - Runaway.mp3",
+    lrc: "/lyrics/runaway.lrc",
   },
   {
     id: 100,
@@ -890,6 +900,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/bab.jpg",
     src: "/music/Bella Poarch - Build A Bitch.mp3",
+    lrc: "/lyrics/build-a-bitch.lrc",
   },
   {
     id: 101,
@@ -898,6 +909,7 @@ const localSongs: Song[] = [
     genre: "Pop / Acoustic",
     cover: "/images/aty.jpg",
     src: "/music/Christina Perri - A Thousand Years.mp3",
+    lrc: "/lyrics/a-thousand-years.lrc",
   },
   {
     id: 102,
@@ -906,6 +918,7 @@ const localSongs: Song[] = [
     genre: "Indie / Acoustic",
     cover: "/images/eob.jpg",
     src: "/music/Djo - End Of Beginning (Official Audio) - Djo Music.mp3",
+    lrc: "/lyrics/end-of-beginning.lrc",
   },
   {
     id: 103,
@@ -914,6 +927,7 @@ const localSongs: Song[] = [
     genre: "Pop / Rock",
     cover: "/images/sotm.jpg",
     src: "/music/Harry Styles - Sign of the Times.mp3",
+    lrc: "/lyrics/sign-of-the-times.lrc",
   },
   {
     id: 104,
@@ -922,6 +936,7 @@ const localSongs: Song[] = [
     genre: "Indie / Rock",
     cover: "/images/sowk.jpg",
     src: "/music/Keane - Somewhere Only We Know.mp3",
+    lrc: "/lyrics/somewhere-only-we-know.lrc",
   },
   {
     id: 105,
@@ -930,6 +945,7 @@ const localSongs: Song[] = [
     genre: "Indie / Acoustic",
     cover: "/images/tnwm.jpg",
     src: "/music/Lord Huron - The Night We Met.mp3",
+    lrc: "/lyrics/the-night-we-met.lrc",
   },
   {
     id: 106,
@@ -938,6 +954,7 @@ const localSongs: Song[] = [
     genre: "Pop / Indie",
     cover: "/images/multo.jpg",
     src: "/music/Multo - Cup of Joe.mp3",
+    lrc: "/lyrics/multo.lrc",
   },
   {
     id: 107,
@@ -946,6 +963,7 @@ const localSongs: Song[] = [
     genre: "R&B / Soul",
     cover: "/images/lowkey.jpg",
     src: "/music/NIKI - lowkey.mp3",
+    lrc: "/lyrics/lowkey.lrc",
   },
   {
     id: 108,
@@ -954,6 +972,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/bss.jpg",
     src: "/music/Nadhif Basalamah - bergema sampai selamanya.mp3",
+    lrc: "/lyrics/bergema-sampai-selamanya.lrc",
   },
   {
     id: 109,
@@ -962,6 +981,7 @@ const localSongs: Song[] = [
     genre: "Pop / Acoustic",
     cover: "/images/te.jpg",
     src: "/music/New West - Those Eyes.mp3",
+    lrc: "/lyrics/those-eyes.lrc",
   },
   {
     id: 110,
@@ -970,6 +990,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/nc.jpg",
     src: "/music/One Direction - Night Changes.mp3",
+    lrc: "/lyrics/night-changes.lrc",
   },
   {
     id: 111,
@@ -978,6 +999,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/klb.jpg",
     src: "/music/Overnight - Kita Lewati Berdua.mp3",
+    lrc: "/lyrics/kita-lewati-berdua.lrc",
   },
   {
     id: 112,
@@ -986,6 +1008,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/psi.jpg",
     src: "/music/Paul Partohap - P.S. I LOVE YOU.mp3",
+    lrc: "/lyrics/ps-i-love-you.lrc",
   },
   {
     id: 113,
@@ -994,6 +1017,7 @@ const localSongs: Song[] = [
     genre: "R&B / Soul",
     cover: "/images/amw.jpg",
     src: "/music/Pink Sweat - At My Worst (feat.Kehlani).mp3",
+    lrc: "/lyrics/at-my-worst.lrc",
   },
   {
     id: 114,
@@ -1002,6 +1026,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/apt.jpg",
     src: "/music/rose-bruno-apt.mp3",
+    lrc: "/lyrics/apt.lrc",
   },
   {
     id: 115,
@@ -1010,6 +1035,7 @@ const localSongs: Song[] = [
     genre: "Indie / Rock",
     cover: "/images/ns.jpg",
     src: "/music/Radiohead - No Surprises.mp3",
+    lrc: "/lyrics/no-surprises.lrc",
   },
   {
     id: 116,
@@ -1018,6 +1044,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/ba.jpg",
     src: "/music/Rio Clappy - Bunga Abadi.mp3",
+    lrc: "/lyrics/bunga-abadi.lrc",
   },
   {
     id: 117,
@@ -1026,6 +1053,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/ldr.jpg",
     src: "/music/Shoti - LDR.mp3",
+    lrc: "/lyrics/ldr.lrc",
   },
   {
     id: 118,
@@ -1034,6 +1062,7 @@ const localSongs: Song[] = [
     genre: "Pop / Acoustic",
     cover: "/images/uify.jpg",
     src: "/music/Stephen Sanchez - Until I Found You.mp3",
+    lrc: "/lyrics/until-i-found-you.lrc",
   },
   {
     id: 119,
@@ -1042,6 +1071,7 @@ const localSongs: Song[] = [
     genre: "Indie / Acoustic",
     cover: "/images/pasilyo.jpg",
     src: "/music/SunKissed Lola - Pasilyo.mp3",
+    lrc: "/lyrics/pasilyo.lrc",
   },
   {
     id: 120,
@@ -1050,6 +1080,7 @@ const localSongs: Song[] = [
     genre: "Indonesian Hits",
     cover: "/images/bm.jpg",
     src: "/music/The Lantis - Bunga Maaf.mp3",
+    lrc: "/lyrics/bunga-maaf.lrc",
   },
   {
     id: 121,
@@ -1058,6 +1089,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/dtd.jpg",
     src: "/music/ZAYN & Sia - Dusk Till Dawn.mp3",
+    lrc: "/lyrics/dusk-till-dawn.lrc",
   },
   {
     id: 122,
@@ -1066,6 +1098,7 @@ const localSongs: Song[] = [
     genre: "Indie / Acoustic",
     cover: "/images/glue.jpg",
     src: "/music/beabadoobee ft. Clairo - Glue Song.mp3",
+    lrc: "/lyrics/glue-song.lrc",
   },
   {
     id: 123,
@@ -1074,6 +1107,7 @@ const localSongs: Song[] = [
     genre: "R&B / Soul",
     cover: "/images/hwm.jpg",
     src: "/music/d4vd - Here With Me.mp3",
+    lrc: "/lyrics/here-with-me.lrc",
   },
   {
     id: 124,
@@ -1082,6 +1116,7 @@ const localSongs: Song[] = [
     genre: "R&B / Soul",
     cover: "/images/limbo.jpg",
     src: "/music/keshi - LIMBO.mp3",
+    lrc: "/lyrics/limbo.lrc",
   },
   {
     id: 125,
@@ -1090,6 +1125,7 @@ const localSongs: Song[] = [
     genre: "Pop",
     cover: "/images/blinding-lights.jpg",
     src: "/music/The Weeknd - Blinding Lights.mp3",
+    lrc: "/lyrics/blinding-lights.lrc",
   },
 ];
 
