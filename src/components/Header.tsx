@@ -87,7 +87,7 @@ export default function Header({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Cari lagu, musisi, atau genre... (tekan '/')"
+              placeholder="Cari lagu, musisi, atau genre..."
               aria-label="Cari lagu, musisi, atau genre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

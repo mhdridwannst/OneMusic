@@ -8,7 +8,6 @@ import { defaultSongs } from "@/data/defaultSongs";
 // KOMPONEN UI
 import Header from "@/components/Header";
 import HeroCarousel from "@/components/HeroCarousel";
-import QuickPicks from "@/components/QuickPicks";
 import SongRowSection from "@/components/SongRowSection";
 import RecentlyPlayed from "@/components/RecentlyPlayed";
 import RecommendationSection from "@/components/RecommendationSection";
@@ -73,7 +72,9 @@ export default function Home() {
       try {
         const response = await fetch("/api/songs");
         if (!response.ok) {
-          throw new Error(`Songs request failed with status ${response.status}`);
+          throw new Error(
+            `Songs request failed with status ${response.status}`,
+          );
         }
         const data: Song[] = await response.json();
         if (isMounted) {
@@ -205,7 +206,9 @@ export default function Home() {
 
         if (tab === "pop") {
           matchesTab =
-            (songGenre.includes("pop") && !songGenre.includes("indo") && !songGenre.includes("k-pop")) ||
+            (songGenre.includes("pop") &&
+              !songGenre.includes("indo") &&
+              !songGenre.includes("k-pop")) ||
             songGenre === "pop";
         } else if (tab === "k-pop") {
           matchesTab =
@@ -247,16 +250,14 @@ export default function Home() {
           matchesTab =
             songGenre.includes("indie") || songGenre.includes("acoustic");
         } else if (tab.includes("r&b")) {
-          matchesTab =
-            songGenre.includes("r&b") || songGenre.includes("soul");
+          matchesTab = songGenre.includes("r&b") || songGenre.includes("soul");
         } else if (tab.includes("lo-fi")) {
           matchesTab =
             songGenre.includes("lo-fi") ||
             songGenre.includes("ambient") ||
             songGenre.includes("chill");
         } else {
-          matchesTab =
-            songGenre.includes(tab) || tab.includes(songGenre);
+          matchesTab = songGenre.includes(tab) || tab.includes(songGenre);
         }
       }
 
@@ -271,7 +272,14 @@ export default function Home() {
     }
 
     return filtered;
-  }, [activeTab, sortBy, searchTerm, songs, player.likedSongs, playlistSongIds]);
+  }, [
+    activeTab,
+    sortBy,
+    searchTerm,
+    songs,
+    player.likedSongs,
+    playlistSongIds,
+  ]);
 
   const recommendedSongs = useMemo(() => {
     if (!player.currentSong) return songs.slice(0, 5);
@@ -288,7 +296,10 @@ export default function Home() {
         );
         return {
           song,
-          score: (sameGenre ? 3 : 0) + (liked ? 2 : 0) + (recentlyPlayedSong ? 1 : 0),
+          score:
+            (sameGenre ? 3 : 0) +
+            (liked ? 2 : 0) +
+            (recentlyPlayedSong ? 1 : 0),
         };
       })
       .sort((a, b) => b.score - a.score)
@@ -369,7 +380,9 @@ export default function Home() {
 
   // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
   const trendingHits = useMemo(() => {
-    const viralIds = [114, 125, 77, 73, 87, 72, 63, 74, 70, 95, 27, 28, 88, 78, 102, 110];
+    const viralIds = [
+      114, 125, 77, 73, 87, 72, 63, 74, 70, 95, 27, 28, 88, 78, 102, 110,
+    ];
     return songs.filter((s) => viralIds.includes(s.id));
   }, [songs]);
 
@@ -504,26 +517,18 @@ export default function Home() {
             />
           )}
 
-          {/* Quick Picks Mini Tiles (Gaya Spotify Home) */}
-          {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (
-            <QuickPicks
-              songs={songs}
-              currentSong={player.currentSong}
-              isPlaying={player.isPlaying}
-              onPlay={player.playSong}
-            />
-          )}
-
           {/* Section Baru Saja Diputar (Recently Played) */}
-          {!searchTerm && activeTab === "All Songs" && recentlyPlayed.length > 0 && (
-            <RecentlyPlayed
-              songs={recentlyPlayed}
-              currentSong={player.currentSong}
-              isPlaying={player.isPlaying}
-              onPlay={player.playSong}
-              onClear={handleClearRecentlyPlayed}
-            />
-          )}
+          {!searchTerm &&
+            activeTab === "All Songs" &&
+            recentlyPlayed.length > 0 && (
+              <RecentlyPlayed
+                songs={recentlyPlayed}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                onPlay={player.playSong}
+                onClear={handleClearRecentlyPlayed}
+              />
+            )}
 
           {!searchTerm && activeTab === "All Songs" && (
             <RecommendationSection
@@ -539,7 +544,7 @@ export default function Home() {
             <>
               {/* Row 1: Viral & Trending */}
               <SongRowSection
-                title="Sedang Hangat & Viral"
+                title="Trending Music "
                 subtitle="Lagu-lagu hits terpopuler pilihan pendengar"
                 icon="ri-fire-fill"
                 songs={trendingHits}
@@ -552,7 +557,7 @@ export default function Home() {
 
               {/* Row 2: Indonesian Hits */}
               <SongRowSection
-                title="Hits Terbaik Indonesia"
+                title="Trending Indonesia"
                 subtitle="Karya musisi tanah air paling berkesan"
                 icon="ri-flag-fill"
                 songs={indonesianHitsRow}
@@ -566,7 +571,7 @@ export default function Home() {
 
               {/* Row 3: Asian & K-Pop Wave */}
               <SongRowSection
-                title="K-Pop & Asian Wave"
+                title="K-Pop & J-Pop"
                 subtitle="Irama memukau dari Korea & Jepang"
                 icon="ri-sparkling-fill"
                 songs={asianWaveRow}
@@ -580,7 +585,7 @@ export default function Home() {
 
               {/* Row 4: Chill & Lo-Fi Night */}
               <SongRowSection
-                title="Chill, Lo-Fi & Akustik"
+                title="Chill, Lo-Fi & Bossanova"
                 subtitle="Teman setia saat santai, belajar, atau istirahat malam"
                 icon="ri-moon-clear-fill"
                 songs={chillAcousticRow}
@@ -623,7 +628,10 @@ export default function Home() {
               </h2>
             </div>
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white/50">
-              <i className="ri-music-2-line text-[#22c527]" aria-hidden="true"></i>
+              <i
+                className="ri-music-2-line text-[#22c527]"
+                aria-hidden="true"
+              ></i>
               {displayedSongs.length} lagu
             </span>
           </div>
@@ -659,7 +667,8 @@ export default function Home() {
                 Playlist Masih Kosong
               </h3>
               <p className="text-white/40 text-xs max-w-sm mx-auto mb-4">
-                Tekan tombol tambah pada cover lagu untuk menyimpan lagu favoritmu di sini.
+                Tekan tombol tambah pada cover lagu untuk menyimpan lagu
+                favoritmu di sini.
               </p>
               <button
                 onClick={() => setActiveTab("All Songs")}
@@ -693,8 +702,8 @@ export default function Home() {
           )}
 
           {/* List Lagu: Pilihan Grid Card vs Compact Spotify Table List */}
-          {displayedSongs.length > 0 && (
-            viewMode === "list" ? (
+          {displayedSongs.length > 0 &&
+            (viewMode === "list" ? (
               <SongTableView
                 songs={displayedSongs}
                 currentSong={player.currentSong}
@@ -716,8 +725,7 @@ export default function Home() {
                 playlistSongIds={playlistSongIds}
                 onTogglePlaylist={handleTogglePlaylist}
               />
-            )
-          )}
+            ))}
 
           <Footer />
         </div>
@@ -794,7 +802,7 @@ export default function Home() {
           triggerToast(
             mins
               ? `Timer tidur diatur ke ${mins} menit 🌙`
-              : "Timer tidur dinonaktifkan"
+              : "Timer tidur dinonaktifkan",
           );
         }}
         onShare={async () => {
