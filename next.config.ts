@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   agentRules: false,
+  devIndicators: false,
 };
 
 export default nextConfig;
