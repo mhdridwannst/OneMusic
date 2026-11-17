@@ -335,8 +335,8 @@ export default function Home() {
     player.toggleLike(song.id);
     triggerToast(
       isLiked
-        ? `"${song.title}" dihapus dari Favorit`
-        : `"${song.title}" disimpan ke Favorit ❤️`,
+        ? `"${song.title}" Dihapus dari Favorit`
+        : `"${song.title}" Disimpan ke Favorit`,
     );
   };
 
