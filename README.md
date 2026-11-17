@@ -1,15 +1,16 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:09090b,100:22c527&height=190&section=header&text=OneMusic&fontSize=58&fontColor=ffffff&fontAlignY=40" width="100%" alt="OneMusic" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:09090b,100:22c527&height=180&section=header&text=OneMusic&fontSize=56&fontColor=ffffff&fontAlignY=40" width="100%" alt="OneMusic" />
 
-**Semua musik favoritmu dalam satu platform modern. Nikmati pengalaman mendengarkan lagu yang cepat, jernih, dan bebas hambatan langsung dari browser.**
+Pemutar musik web dengan lirik tersinkronisasi, queue persisten, playlist personal, dan dukungan PWA.<br />
+Dibangun dengan Next.js 16, React 19, dan Supabase.
 
 <p>
-  <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 16" />
-  <img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
 </p>
 
 <a href="https://next-app-music.vercel.app/">Live Demo</a> ·
@@ -20,70 +21,92 @@
 <br />
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/77602984-1120-4518-9c81-1065b60bd560" alt="Tampilan desktop OneMusic" width="100%" />
+  <img src="docs/desktop.png" alt="Beranda OneMusic versi desktop" width="100%" />
 </div>
 
-## Tentang OneMusic
+## Tentang
 
-OneMusic adalah aplikasi musik personal yang dibangun dengan Next.js dan
-TypeScript. Fokusnya adalah pengalaman mendengarkan yang terasa premium:
-antarmuka gelap bergaya glassmorphism, kontrol pemutaran yang responsif,
-queue yang persisten, playlist personal, lirik tersinkronisasi, dan dukungan
-PWA untuk perangkat mobile.
+OneMusic adalah aplikasi musik personal berbasis Next.js dan TypeScript. Antarmukanya gelap dengan gaya glassmorphism, kontrol pemutaran responsif, dan state yang tetap tersimpan antar sesi, termasuk queue, favorit, dan riwayat putar.
+
+## Tampilan
+
+### Desktop
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/b40c1e6a-db0c-4970-a64e-fdca3af71bf5" alt="Tampilan mobile OneMusic" width="300" />
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="docs/desktop.png" alt="Beranda desktop" width="100%" />
+      </td>
+      <td width="50%">
+        <img src="docs/desktop(2).png" alt="Full Player desktop dengan lirik" width="100%" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><sub>Beranda</sub></td>
+      <td align="center"><sub>Full Player dengan lirik</sub></td>
+    </tr>
+  </table>
 </div>
 
-## Fitur utama
+### Mobile
 
-- Katalog lokal-first dengan sinkronisasi Supabase dan fallback yang tangguh.
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%" align="center">
+        <img src="docs/mobile(1).png" alt="Beranda mobile" width="260" />
+      </td>
+      <td width="50%" align="center">
+        <img src="docs/mobile(2).png" alt="Full Player mobile dengan lirik" width="260" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center"><sub>Beranda dan Mini Player</sub></td>
+      <td align="center"><sub>Full Player dengan lirik</sub></td>
+    </tr>
+  </table>
+</div>
+
+## Fitur
+
+- Katalog lokal-first dengan sinkronisasi Supabase dan fallback.
 - Play, pause, next, previous, shuffle, repeat, seek, volume, dan playback rate.
-- Queue prioritas dengan tambah, hapus, ubah urutan, persistence, dan autoplay.
+- Queue prioritas: tambah, hapus, ubah urutan, persistence, dan autoplay.
 - Playlist pribadi, favorit, recently played, dan rekomendasi lagu.
 - Pencarian berdasarkan judul, artis, atau genre.
-- Lirik `.lrc` dengan highlight dan scroll otomatis mengikuti lagu.
-- Deep link lagu melalui `?song=<id>` dan tombol share.
-- Full Player, Mini Player, shortcut keyboard, dan state error audio dengan retry.
+- Lirik `.lrc` dengan highlight dan scroll otomatis.
+- Deep link lagu lewat `?song=<id>` dan tombol share.
+- Full Player, Mini Player, shortcut keyboard, serta state error audio dengan retry.
 - UI responsive untuk desktop, tablet, dan mobile.
 - PWA, metadata Open Graph, tema gelap, reduced motion, dan focus state.
 
-## Arsitektur deployment
-
-```text
-GitHub          → source code, cover, lirik, dan konfigurasi
-Supabase        → database katalog dan Storage untuk file MP3
-Vercel          → build dan hosting aplikasi Next.js
-Browser user    → mengambil audio dari Supabase Storage
-```
-
-File MP3 sengaja tidak disimpan di GitHub. Folder `public/music/` diabaikan
-oleh Git agar repository tetap ringan. Saat development lokal, aplikasi membaca
-MP3 dari folder tersebut. Saat deployment, audio diarahkan ke URL Storage
-melalui `NEXT_PUBLIC_AUDIO_BASE_URL`.
-
 ## Tech stack
 
-| Bagian | Teknologi |
-| --- | --- |
-| Framework | Next.js 16 dengan App Router |
-| UI | React 19, Tailwind CSS 4, Framer Motion |
-| Bahasa | TypeScript |
-| Data dan Storage | Supabase PostgreSQL dan Supabase Storage |
-| Audio | HTMLAudioElement, Media Session API |
-| PWA | Web App Manifest dan production service worker |
-| Hosting | Vercel |
+| Bagian           | Teknologi                                      |
+| ---------------- | ---------------------------------------------- |
+| Framework        | Next.js 16 (App Router)                        |
+| UI               | React 19, Tailwind CSS 4, Framer Motion        |
+| Bahasa           | TypeScript                                     |
+| Data dan storage | Supabase PostgreSQL dan Supabase Storage       |
+| Audio            | HTMLAudioElement, Media Session API            |
+| PWA              | Web App Manifest dan production service worker |
+| Hosting          | Vercel                                         |
+
+## Arsitektur deployment
+
+| Layanan  | Peran                                          |
+| -------- | ---------------------------------------------- |
+| GitHub   | Source code, cover, lirik, dan konfigurasi     |
+| Supabase | Database katalog dan Storage untuk file MP3    |
+| Vercel   | Build dan hosting aplikasi Next.js             |
+| Browser  | Mengambil audio langsung dari Supabase Storage |
+
+File MP3 tidak disimpan di GitHub. Folder `public/music/` diabaikan oleh Git agar repository tetap ringan. Saat development lokal, aplikasi membaca MP3 dari folder tersebut. Saat deployment, audio diarahkan ke Storage lewat `NEXT_PUBLIC_AUDIO_BASE_URL`.
 
 ## Menjalankan secara lokal
 
-### Prasyarat
-
-- Node.js 18 atau lebih baru
-- npm
-- Project Supabase
-- File MP3 personal di `public/music/`
-
-### Instalasi
+**Prasyarat:** Node.js 18+, npm, project Supabase, dan file MP3 personal di `public/music/`.
 
 ```bash
 git clone https://github.com/mhdridwannst/OneMusic.git
@@ -91,9 +114,7 @@ cd OneMusic
 npm install
 ```
 
-### Environment variable
-
-Buat file `.env.local` di root project:
+Buat `.env.local` di root project:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://project-ref.supabase.co
@@ -104,11 +125,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=isi-dengan-publishable-key
 # NEXT_PUBLIC_AUDIO_BASE_URL=https://project-ref.supabase.co/storage/v1/object/public/music
 ```
 
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` aman digunakan oleh client sesuai policy
-Supabase. Jangan pernah memasukkan Secret key atau service role key ke source
-code, browser, GitHub, atau environment variable `NEXT_PUBLIC_*`.
-
-### Menjalankan development server
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` aman dipakai di client sesuai policy Supabase. Jangan pernah memasukkan secret key atau service role key ke source code, browser, GitHub, atau variabel `NEXT_PUBLIC_*`.
 
 ```bash
 npm run dev
@@ -120,7 +137,7 @@ Buka [http://localhost:3000](http://localhost:3000).
 
 ### Tabel katalog
 
-Jalankan di Supabase SQL Editor:
+Jalankan di SQL Editor:
 
 ```sql
 create table songs (
@@ -144,9 +161,7 @@ create policy "Public read access"
 1. Buka **Storage** di dashboard Supabase.
 2. Buat bucket publik bernama `music`.
 3. Pastikan ukuran setiap MP3 berada di bawah batas upload project.
-4. Upload semua MP3 menggunakan script project.
-
-Jalankan dari PowerShell:
+4. Upload semua MP3 dengan script project (PowerShell):
 
 ```powershell
 $env:NEXT_PUBLIC_SUPABASE_URL="https://project-ref.supabase.co"
@@ -155,17 +170,17 @@ $env:SUPABASE_AUDIO_BUCKET="music"
 npm run upload:audio
 ```
 
-Script memakai `upsert`, sehingga menjalankan ulang upload tidak membuat file
-duplikat. Service role key hanya dipakai sementara di terminal lokal dan tidak
-boleh di-commit.
+Script memakai `upsert`, jadi menjalankan ulang tidak membuat file duplikat. Service role key hanya dipakai sementara di terminal lokal dan tidak boleh di-commit.
 
-Setelah upload, URL audio publik memiliki pola:
+URL audio publik berpola:
 
 ```text
 https://project-ref.supabase.co/storage/v1/object/public/music/nama-file.mp3
 ```
 
-## Validasi sebelum commit atau deploy
+## Validasi
+
+Jalankan sebelum commit atau deploy:
 
 ```bash
 npm run validate:catalog
@@ -173,14 +188,12 @@ npm run lint
 npm run build
 ```
 
-`validate:catalog` memeriksa ID lagu, duplikasi audio, serta keberadaan asset
-audio dan cover. `npm run build` memastikan aplikasi dapat dikompilasi untuk
-production.
+`validate:catalog` memeriksa ID lagu, duplikasi audio, serta keberadaan asset audio dan cover. `npm run build` memastikan aplikasi bisa dikompilasi untuk production.
 
 ## Deploy ke Vercel
 
-1. Import repository ini ke Vercel.
-2. Tambahkan environment variable berikut di **Settings → Environment Variables**:
+1. Import repository ke Vercel.
+2. Tambahkan environment variable di **Settings → Environment Variables**:
 
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://project-ref.supabase.co
@@ -188,38 +201,27 @@ production.
    NEXT_PUBLIC_AUDIO_BASE_URL=https://project-ref.supabase.co/storage/v1/object/public/music
    ```
 
-3. Aktifkan variable untuk **Production** dan **Preview**.
-4. Deploy atau redeploy project.
-5. Tes pemutaran beberapa lagu dan cek URL audio pada browser Network panel.
+3. Aktifkan untuk **Production** dan **Preview**.
+4. Deploy atau redeploy.
+5. Tes pemutaran beberapa lagu dan cek URL audio di Network panel browser.
 
-Jangan tambahkan `SUPABASE_SERVICE_ROLE_KEY` ke Vercel. Key tersebut hanya
-diperlukan untuk proses upload dari komputer lokal.
+> [!WARNING]
+> Jangan tambahkan `SUPABASE_SERVICE_ROLE_KEY` ke Vercel. Key itu hanya untuk proses upload dari komputer lokal.
 
-## Troubleshooting audio
+## Troubleshooting
 
-### Lagu tidak dapat diputar setelah deploy
+**Lagu tidak bisa diputar setelah deploy**
 
 - Pastikan bucket `music` bersifat publik.
-- Pastikan `NEXT_PUBLIC_AUDIO_BASE_URL` tidak memiliki slash di akhir.
+- Pastikan `NEXT_PUBLIC_AUDIO_BASE_URL` tidak berakhir dengan slash.
 - Pastikan nama object di Storage sama dengan nama file yang direferensikan.
-- Pastikan environment variable diterapkan pada deployment yang benar.
-- Redeploy setelah mengubah environment variable.
+- Pastikan environment variable diterapkan pada deployment yang benar, lalu redeploy.
 
-### Upload berhenti pada satu file
+**Upload berhenti pada satu file**
 
-Periksa nama file. Gunakan nama ASCII sederhana seperti huruf, angka, `-`,
-`_`, dan `.mp3`. Hindari emoji, tanda kurung siku, dan karakter Unicode
-khusus pada nama object Storage.
+Periksa nama file. Gunakan karakter ASCII sederhana (huruf, angka, `-`, `_`, dan `.mp3`). Hindari emoji, tanda kurung siku, dan karakter Unicode khusus pada nama object Storage. Lalu jalankan ulang `npm run upload:audio`; file yang sudah ada akan di-update karena uploader memakai `upsert: true`.
 
-Jalankan ulang:
-
-```bash
-npm run upload:audio
-```
-
-File yang sudah ada akan di-update karena uploader menggunakan `upsert: true`.
-
-## Struktur penting
+## Struktur project
 
 ```text
 src/
@@ -236,21 +238,19 @@ public/
 scripts/
 ├── upload-audio-to-supabase.mjs
 └── validate-catalog.mjs
+docs/                     # Screenshot untuk README
 ```
 
-## Status project
+## Status
 
-OneMusic saat ini berada pada tahap **personal production-ready**: fitur utama
-player, katalog, playlist, queue, PWA, validasi asset, dan deployment audio
-eksternal sudah tersedia. Pengembangan berikutnya dapat berfokus pada
-automated UI testing, sinkronisasi akun, dan artwork yang lebih konsisten.
+Fitur utama sudah tersedia: player, katalog, playlist, queue, PWA, validasi asset, dan audio eksternal di Supabase Storage. Belum ada automated test.
 
-## Kontribusi dan feedback
+Rencana berikutnya:
 
-Temukan bug atau punya ide? Silakan buat
-[issue di GitHub](https://github.com/mhdridwannst/OneMusic/issues).
+- Automated UI testing
+- Sinkronisasi akun
+- Artwork yang lebih konsisten
 
-<div align="center">
-  <br />
-  Dibuat dengan fokus pada musik, kenyamanan, dan pengalaman personal.
-</div>
+## Kontribusi
+
+Menemukan bug atau punya ide? Buat [issue di GitHub](https://github.com/mhdridwannst/OneMusic/issues).

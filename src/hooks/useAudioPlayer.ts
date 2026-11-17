@@ -5,7 +5,13 @@ type RepeatMode = "off" | "all" | "one";
 
 const getStoredVolume = () => {
   if (typeof window === "undefined") return 1;
-  const parsed = Number(window.localStorage.getItem("volume"));
+
+  const stored = window.localStorage.getItem("volume");
+
+  if (stored === null) return 1;
+
+  const parsed = Number(stored);
+
   return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 1;
 };
 
@@ -15,8 +21,7 @@ const getStoredLikes = () => {
     const parsed: unknown = JSON.parse(
       window.localStorage.getItem("likedSongs") || "[]",
     );
-    return Array.isArray(parsed) &&
-      parsed.every((id) => typeof id === "number")
+    return Array.isArray(parsed) && parsed.every((id) => typeof id === "number")
       ? parsed
       : [];
   } catch {
@@ -41,8 +46,12 @@ export function useAudioPlayer(songs: Song[]) {
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("all");
 
   // State Sleep Timer (dalam menit & sisa detik)
-  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
-  const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(null);
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(
+    null,
+  );
+  const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(
+    null,
+  );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
@@ -84,17 +93,20 @@ export function useAudioPlayer(songs: Song[]) {
     playlistRef.current = newPlaylist;
   }, []);
 
-  const queueSongNext = useCallback((song: Song) => {
-    if (currentSong?.id === song.id) return;
-    setPriorityQueue((current) => {
-      const nextQueue = [
-        song,
-        ...current.filter((queued) => queued.id !== song.id),
-      ];
-      priorityQueueRef.current = nextQueue;
-      return nextQueue;
-    });
-  }, [currentSong]);
+  const queueSongNext = useCallback(
+    (song: Song) => {
+      if (currentSong?.id === song.id) return;
+      setPriorityQueue((current) => {
+        const nextQueue = [
+          song,
+          ...current.filter((queued) => queued.id !== song.id),
+        ];
+        priorityQueueRef.current = nextQueue;
+        return nextQueue;
+      });
+    },
+    [currentSong],
+  );
 
   const removeQueuedSong = useCallback((songId: number) => {
     setPriorityQueue((current) => {
@@ -212,7 +224,7 @@ export function useAudioPlayer(songs: Song[]) {
         setIsPlaying(false);
       }
     },
-    [currentSong, playbackRate, safePlay]
+    [currentSong, playbackRate, safePlay],
   );
 
   const togglePlay = useCallback(() => {
@@ -252,7 +264,7 @@ export function useAudioPlayer(songs: Song[]) {
       }
     } else {
       const currentIndex = currentList.findIndex(
-        (s) => s.id === currentSong.id
+        (s) => s.id === currentSong.id,
       );
 
       if (currentIndex === -1) {
@@ -292,7 +304,10 @@ export function useAudioPlayer(songs: Song[]) {
 
   const handleSeek = (time: number) => {
     if (audioRef.current) {
-      const clamped = Math.max(0, Math.min(audioRef.current.duration || time, time));
+      const clamped = Math.max(
+        0,
+        Math.min(audioRef.current.duration || time, time),
+      );
       audioRef.current.currentTime = clamped;
       setProgress(clamped);
     }
@@ -302,7 +317,10 @@ export function useAudioPlayer(songs: Song[]) {
     if (audioRef.current) {
       const newTime = Math.max(
         0,
-        Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + seconds)
+        Math.min(
+          audioRef.current.duration || 0,
+          audioRef.current.currentTime + seconds,
+        ),
       );
       audioRef.current.currentTime = newTime;
       setProgress(newTime);
@@ -405,7 +423,9 @@ export function useAudioPlayer(songs: Song[]) {
     const onError = (e: Event) => {
       console.warn("Audio loading or decoding error:", e);
       setIsPlaying(false);
-      setAudioError("Lagu tidak dapat diputar. Coba lagi atau pilih lagu lain.");
+      setAudioError(
+        "Lagu tidak dapat diputar. Coba lagi atau pilih lagu lain.",
+      );
     };
 
     audio.addEventListener("timeupdate", updateTime);

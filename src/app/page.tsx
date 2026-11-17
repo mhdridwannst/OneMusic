@@ -375,7 +375,7 @@ export default function Home() {
     if (!player.isShuffle) {
       player.toggleShuffle();
     }
-    triggerToast("Memutar acak lagu 🔀");
+    triggerToast("Memutar lagu secara acak");
   };
 
   // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
