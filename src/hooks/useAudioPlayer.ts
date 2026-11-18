@@ -6,13 +6,17 @@ type RepeatMode = "off" | "all" | "one";
 const getStoredVolume = () => {
   if (typeof window === "undefined") return 1;
 
-  const stored = window.localStorage.getItem("volume");
+  try {
+    const storedVolume = window.localStorage.getItem("volume");
+    // Number(null) is 0. A first-time visitor should start at full volume.
+    if (storedVolume === null || storedVolume.trim() === "") return 1;
 
-  if (stored === null) return 1;
-
-  const parsed = Number(stored);
-
-  return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 1;
+    const parsed = Number(storedVolume);
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 1;
+  } catch {
+    // Storage can be unavailable in restricted/private browsing contexts.
+    return 1;
+  }
 };
 
 const getStoredLikes = () => {
@@ -413,7 +417,12 @@ export function useAudioPlayer(songs: Song[]) {
       if (repeatMode === "one") {
         audio.currentTime = 0;
         safePlay(audio);
-      } else if (repeatMode === "all" || isShuffle) {
+        return;
+      }
+
+      const hasQueuedSongs = priorityQueueRef.current.length > 0;
+
+      if (hasQueuedSongs || repeatMode === "all" || isShuffle) {
         handleNext();
       } else {
         setIsPlaying(false);

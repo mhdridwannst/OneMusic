@@ -101,12 +101,8 @@ export default function AlbumCard({
                 ? "bg-[#22c527] text-black opacity-100 shadow-md shadow-[#22c527]/20"
                 : "bg-black/50 text-white/60 hover:text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:scale-110"
             }`}
-            aria-label={
-              isInPlaylist
-                ? "Hapus dari playlist saya"
-                : "Tambahkan ke playlist saya"
-            }
-            title={isInPlaylist ? "Hapus dari Playlist" : "Tambah ke Playlist"}
+            aria-label="Kelola playlist untuk lagu ini"
+            title={isInPlaylist ? "Lagu ada di playlist · Kelola playlist" : "Tambahkan ke playlist"}
           >
             <i
               className={`${

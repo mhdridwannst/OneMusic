@@ -3,6 +3,12 @@ import { supabase } from "@/lib/supabase";
 import { defaultSongs } from "@/data/defaultSongs";
 import { resolveAudioSrc } from "@/lib/audio";
 
+const normalizeAssetPath = (assetPath: string): string => {
+  const trimmed = assetPath.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+};
+
 export async function GET() {
   const json = (songs: typeof defaultSongs) =>
     NextResponse.json(songs, {
@@ -15,11 +21,15 @@ export async function GET() {
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
+    if (!supabase) {
+      return json(defaultSongs);
+    }
+
     const { data, error } = await supabase
-        .from("songs")
-        .select("*")
-        .order("id", { ascending: true })
-        .abortSignal(controller.signal);
+      .from("songs")
+      .select("*")
+      .order("id", { ascending: true })
+      .abortSignal(controller.signal);
 
     if (error || !data || data.length === 0) {
       return json(defaultSongs);
@@ -46,11 +56,16 @@ export async function GET() {
           title: song.title || matched?.title || "Unknown Title",
           artist: song.artist || matched?.artist || "Unknown Artist",
           genre: song.genre || matched?.genre || "Pop",
-          cover: song.cover ? (song.cover.startsWith("/") ? song.cover : `/${song.cover}`) : matched?.cover || "/images/laufey.jpg",
+          cover: song.cover
+            ? normalizeAssetPath(song.cover)
+            : matched?.cover || "/images/laufey.jpg",
+          // Keep complete Storage URLs intact; only local/object paths need resolving.
           src: song.src
-            ? resolveAudioSrc(song.src.startsWith("/") ? song.src : `/${song.src}`)
+            ? resolveAudioSrc(normalizeAssetPath(song.src))
             : matched?.src || "",
-          lrc: song.lrc ? (song.lrc.startsWith("/") ? song.lrc : `/${song.lrc}`) : matched?.lrc || "",
+          lrc: song.lrc
+            ? normalizeAssetPath(song.lrc)
+            : matched?.lrc || "",
         };
       });
 

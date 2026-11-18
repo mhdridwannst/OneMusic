@@ -8,8 +8,6 @@ interface TabSectionProps {
   setSortBy: (sort: "default" | "title" | "artist") => void;
   favoritesCount?: number;
   playlistCount?: number;
-  onClearPlaylist?: () => void;
-  onPlayAll?: () => void;
   viewMode?: "grid" | "list";
   onViewModeChange?: (mode: "grid" | "list") => void;
   onShuffleAll?: () => void;
@@ -35,8 +33,6 @@ export default function TabSection({
   setSortBy,
   favoritesCount = 0,
   playlistCount = 0,
-  onClearPlaylist,
-  onPlayAll,
   viewMode = "grid",
   onViewModeChange,
   onShuffleAll,
@@ -105,30 +101,6 @@ export default function TabSection({
       </div>
 
       <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-        {activeTab === "My Playlist" && playlistCount > 0 && onClearPlaylist && (
-          <>
-          {onPlayAll && (
-            <button
-              type="button"
-              onClick={onPlayAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#22c527] text-black text-xs font-bold hover:bg-[#1fbe24] transition"
-              title="Putar semua lagu di playlist"
-            >
-              <i className="ri-play-fill"></i>
-              <span className="hidden sm:inline">Putar Semua</span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onClearPlaylist}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-400/20 bg-red-400/5 text-xs font-semibold text-red-200 hover:bg-red-400/15 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
-            title="Hapus semua lagu dari playlist"
-          >
-            <i className="ri-delete-bin-line"></i>
-            <span className="hidden sm:inline">Kosongkan</span>
-          </button>
-          </>
-        )}
         {/* SHUFFLE ALL BUTTON */}
         {onShuffleAll && (
           <button
@@ -143,6 +115,7 @@ export default function TabSection({
         )}
 
         {/* CUSTOM GLASS SORT DROPDOWN */}
+        {activeTab !== "My Playlist" && (
         <div className="relative flex items-center gap-2 text-xs text-white/60 bg-white/5 hover:bg-white/8 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md transition shadow-sm">
           <i className="ri-sort-desc text-[#22c527]"></i>
           <span className="text-white/40 hidden sm:inline">Urutkan:</span>
@@ -159,9 +132,10 @@ export default function TabSection({
             <option value="artist" className="bg-[#18181b] text-white">Artis (A-Z)</option>
           </select>
         </div>
+        )}
 
         {/* VIEW MODE SWITCHER (GRID VS LIST TABLE) */}
-        {onViewModeChange && (
+        {activeTab !== "My Playlist" && onViewModeChange && (
           <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5 shadow-sm">
             <button
               type="button"

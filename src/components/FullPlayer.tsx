@@ -44,21 +44,28 @@ const formatTime = (seconds: number) => {
 };
 
 const parseLRC = (text: string) => {
-  const lines = text.split("\n");
   const result: { time: number; content: string }[] = [];
-  const regex = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/;
-  for (const line of lines) {
-    const match = regex.exec(line);
-    if (match) {
-      const min = parseInt(match[1]);
-      const sec = parseInt(match[2]);
-      const ms = match[3] ? parseInt(match[3]) : 0;
-      const time = min * 60 + sec + ms / (match[3]?.length === 3 ? 1000 : 100);
-      const content = line.replace(regex, "").trim();
-      if (content) result.push({ time, content });
+  const timestampRegex = /\[(\d{1,}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+
+  for (const line of text.split(/\r?\n/)) {
+    const matches = [...line.matchAll(timestampRegex)];
+    if (matches.length === 0) continue;
+
+    const content = line.replace(timestampRegex, "").trim();
+    if (!content) continue;
+
+    for (const match of matches) {
+      const minutes = Number(match[1]);
+      const seconds = Number(match[2]);
+      const fraction = match[3] ?? "";
+      const fractionalSeconds = fraction ? Number(`0.${fraction}`) : 0;
+      const time = minutes * 60 + seconds + fractionalSeconds;
+
+      if (Number.isFinite(time)) result.push({ time, content });
     }
   }
-  return result;
+
+  return result.sort((a, b) => a.time - b.time);
 };
 
 export default function FullPlayer({
@@ -94,8 +101,16 @@ export default function FullPlayer({
   onShare,
 }: FullPlayerProps) {
   const [lyrics, setLyrics] = useState<{ time: number; content: string }[]>([]);
-  const [activeRightTab, setActiveRightTab] = useState<"lyrics" | "queue">("lyrics");
-  const [showDetailsPanel, setShowDetailsPanel] = useState(true);
+  const [lyricsStatus, setLyricsStatus] = useState<
+    "loading" | "ready" | "unavailable"
+  >("unavailable");
+  const [activeRightTab, setActiveRightTab] = useState<"lyrics" | "queue">(
+    "lyrics",
+  );
+  // On mobile, keep the player focused on artwork and controls until the user opens Lyrics & Queue.
+  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
+  const [isMobileLyricsFollowEnabled, setIsMobileLyricsFollowEnabled] =
+    useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
   const [imageErrorSongId, setImageErrorSongId] = useState<number | null>(null);
@@ -111,36 +126,62 @@ export default function FullPlayer({
     const checkDesktop = () => {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
-      if (desktop) {
-        setShowDetailsPanel(true);
-      }
+      setShowDetailsPanel(desktop);
     };
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
-  // Fetch LRC (Pre-fetch agar lirik instan siap saat dibuka)
+  // Load synchronized lyrics without allowing an old request to overwrite a newer song.
   useEffect(() => {
     let ignore = false;
+
     if (!currentSong?.lrc) {
       Promise.resolve().then(() => {
-        if (!ignore) setLyrics([]);
+        if (!ignore) {
+          setLyrics([]);
+          setLyricsStatus("unavailable");
+        }
       });
+
       return () => {
         ignore = true;
       };
     }
-    fetch(currentSong.lrc)
-      .then((res) => res.text())
-      .then((text) => {
-        if (!ignore) setLyrics(parseLRC(text));
+
+    const controller = new AbortController();
+    Promise.resolve().then(() => {
+      if (!ignore) {
+        setLyrics([]);
+        setLyricsStatus("loading");
+      }
+    });
+
+    fetch(currentSong.lrc, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Lyrics request failed: ${response.status}`);
+        }
+        return response.text();
       })
-      .catch(() => {
-        if (!ignore) setLyrics([]);
+      .then((text) => {
+        if (ignore) return;
+        const parsedLyrics = parseLRC(text);
+        setLyrics(parsedLyrics);
+        setLyricsStatus(parsedLyrics.length > 0 ? "ready" : "unavailable");
+      })
+      .catch((error: unknown) => {
+        if (ignore) return;
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.warn("Failed to load synchronized lyrics:", error);
+        setLyrics([]);
+        setLyricsStatus("unavailable");
       });
+
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, [currentSong?.lrc]);
 
@@ -155,16 +196,55 @@ export default function FullPlayer({
     return idx;
   }, [progress, lyrics]);
 
-  // Scroll active lyric smoothly into view
+  // Manual scroll disables mobile follow mode until the user explicitly enables it again.
+  const handleManualLyricsScroll = () => {
+    if (!isDesktop && isMobileLyricsFollowEnabled) {
+      setIsMobileLyricsFollowEnabled(false);
+    }
+  };
+
+  // Follow the active lyric inside the lyrics panel only.
+  // Never use scrollIntoView here: it can scroll the whole mobile player/page.
   useEffect(() => {
-    if (!isOpen || activeRightTab !== "lyrics" || activeLyricIndex === -1) {
+    const shouldFollowLyrics = isDesktop || isMobileLyricsFollowEnabled;
+
+    if (
+      !isOpen ||
+      !showDetailsPanel ||
+      activeRightTab !== "lyrics" ||
+      activeLyricIndex === -1 ||
+      !shouldFollowLyrics
+    ) {
       return;
     }
-    lyricRefs.current[activeLyricIndex]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
+
+    const container = lyricsContainerRef.current;
+    const activeLine = lyricRefs.current[activeLyricIndex];
+
+    if (!container || !activeLine) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const lineRect = activeLine.getBoundingClientRect();
+    const targetScrollTop =
+      container.scrollTop +
+      lineRect.top -
+      containerRect.top -
+      (container.clientHeight - lineRect.height) / 2;
+
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
     });
-  }, [activeLyricIndex, isOpen, activeRightTab]);
+  }, [
+    activeLyricIndex,
+    activeRightTab,
+    isDesktop,
+    isMobileLyricsFollowEnabled,
+    isOpen,
+    showDetailsPanel,
+  ]);
 
   // Touch & Mouse Scrubbing Seek Handler
   const handleSeekFromClientX = (clientX: number) => {
@@ -193,9 +273,7 @@ export default function FullPlayer({
     isDraggingSeek.current = false;
   };
 
-  const handleProgressBarKeyDown = (
-    e: React.KeyboardEvent<HTMLDivElement>,
-  ) => {
+  const handleProgressBarKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     e.stopPropagation();
     if (duration <= 0) return;
     const step = Math.max(duration / 100, 5);
@@ -224,7 +302,7 @@ export default function FullPlayer({
   // Drag down to dismiss khusus di area Header agar tidak bentrok dengan scroll lirik
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    info: PanInfo,
   ) => {
     if (info.offset.y > 80 || info.velocity.y > 400) {
       onClose();
@@ -309,11 +387,12 @@ export default function FullPlayer({
                           : "ri-moon-line text-sm"
                       }
                     ></i>
-                    {sleepTimerRemaining !== null && sleepTimerRemaining > 0 && (
-                      <span className="font-mono text-[11px]">
-                        {formatTime(sleepTimerRemaining)}
-                      </span>
-                    )}
+                    {sleepTimerRemaining !== null &&
+                      sleepTimerRemaining > 0 && (
+                        <span className="font-mono text-[11px]">
+                          {formatTime(sleepTimerRemaining)}
+                        </span>
+                      )}
                   </button>
 
                   {showTimerMenu && (
@@ -392,7 +471,9 @@ export default function FullPlayer({
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center active:scale-90 transition cursor-pointer"
                 title="Favorit"
                 aria-label={
-                  isLiked ? "Hapus lagu dari favorit" : "Tambahkan lagu ke favorit"
+                  isLiked
+                    ? "Hapus lagu dari favorit"
+                    : "Tambahkan lagu ke favorit"
                 }
               >
                 <i
@@ -456,7 +537,9 @@ export default function FullPlayer({
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-800 text-[#22c527]">
                         <i className="ri-disc-fill text-6xl opacity-80 mb-2"></i>
-                        <p className="text-xs text-white/60 font-bold">{currentSong.title}</p>
+                        <p className="text-xs text-white/60 font-bold">
+                          {currentSong.title}
+                        </p>
                       </div>
                     )}
 
@@ -522,7 +605,9 @@ export default function FullPlayer({
                       </div>
                     </div>
                     <div className="flex justify-between text-xs font-mono font-medium text-white/50 mt-2">
-                      <span className="text-white/80 font-semibold">{formatTime(progress)}</span>
+                      <span className="text-white/80 font-semibold">
+                        {formatTime(progress)}
+                      </span>
                       <span>{formatTime(duration)}</span>
                     </div>
                   </div>
@@ -611,8 +696,8 @@ export default function FullPlayer({
                         volume === 0
                           ? "volume-mute-fill"
                           : volume < 0.5
-                          ? "volume-down-fill"
-                          : "volume-up-fill"
+                            ? "volume-down-fill"
+                            : "volume-up-fill"
                       } text-lg`}
                       title="Mute / Unmute"
                     ></i>
@@ -634,238 +719,295 @@ export default function FullPlayer({
 
                 {/* BAGIAN 2: PANEL LIRIK & UP NEXT (OPSIONAL) */}
                 {showDetailsPanel && (
-                <div className="flex-none w-full max-w-md lg:max-w-none lg:w-115 h-64 sm:h-76 lg:h-140 flex flex-col bg-white/3 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-xl mt-2 lg:mt-0 shadow-2xl">
-                  {/* TAB SWITCHER */}
-                  <div className="flex items-center justify-between p-3 border-b border-white/5 bg-black/25">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setActiveRightTab("lyrics")}
-                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                          activeRightTab === "lyrics"
-                            ? "bg-[#22c527] text-black shadow-md shadow-[#22c527]/30"
-                            : "text-white/60 hover:text-white"
-                        }`}
-                      >
-                        <i className="ri-mic-line mr-1.5"></i> Lyrics
-                      </button>
-                      <button
-                        onClick={() => setActiveRightTab("queue")}
-                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                          activeRightTab === "queue"
-                            ? "bg-[#22c527] text-black shadow-md shadow-[#22c527]/30"
-                            : "text-white/60 hover:text-white"
-                        }`}
-                      >
-                        <i className="ri-play-list-2-line mr-1.5"></i> Up Next (
-                        {priorityQueue.length + playlist.length})
-                      </button>
-                    </div>
+                  <div className="flex-none w-full max-w-md lg:max-w-none lg:w-115 h-64 sm:h-76 lg:h-140 flex flex-col bg-white/3 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-xl mt-2 lg:mt-0 shadow-2xl">
+                    {/* TAB SWITCHER */}
+                    <div className="flex items-center justify-between p-3 border-b border-white/5 bg-black/25">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setActiveRightTab("lyrics")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                            activeRightTab === "lyrics"
+                              ? "bg-[#22c527] text-black shadow-md shadow-[#22c527]/30"
+                              : "text-white/60 hover:text-white"
+                          }`}
+                        >
+                          <i className="ri-mic-line mr-1.5"></i> Lyrics
+                        </button>
+                        <button
+                          onClick={() => setActiveRightTab("queue")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                            activeRightTab === "queue"
+                              ? "bg-[#22c527] text-black shadow-md shadow-[#22c527]/30"
+                              : "text-white/60 hover:text-white"
+                          }`}
+                        >
+                          <i className="ri-play-list-2-line mr-1.5"></i> Up Next
+                          ({priorityQueue.length + playlist.length})
+                        </button>
+                      </div>
 
-                    <span className="text-[11px] text-white/40 font-mono">
-                      {activeRightTab === "lyrics"
-                        ? lyrics.length > 0
-                          ? "Auto-sync"
-                          : "Instrumental"
-                        : "Click to play"}
-                    </span>
-                  </div>
-
-                  {/* TAB CONTENT: LYRICS (CLEAN SPOTIFY-STYLE TYPOGRAPHY) */}
-                  {activeRightTab === "lyrics" && (
-                    <div
-                      ref={lyricsContainerRef}
-                      className="w-full flex-1 overflow-y-auto scrollbar-hide px-6 py-6 mask-gradient-vertical"
-                    >
-                      <div className="h-16 lg:h-40"></div>
-                      {lyrics.length > 0 ? (
-                        lyrics.map((line, i) => {
-                          const isActive = i === activeLyricIndex;
-                          return (
-                            <motion.p
-                              key={i}
-                              ref={(el) => {
-                                lyricRefs.current[i] = el;
-                              }}
-                              animate={{
-                                opacity: isActive ? 1 : 0.3,
-                                scale: isActive ? 1.03 : 1,
-                              }}
-                              transition={{ duration: 0.25 }}
-                              className={`py-2 md:py-3 transition-all duration-300 cursor-pointer text-center lg:text-left tracking-normal leading-relaxed select-none ${
-                                isActive
-                                  ? "text-lg sm:text-xl md:text-2xl font-black text-white drop-shadow-md"
-                                  : "text-sm sm:text-base md:text-lg font-bold text-white/35 hover:text-white/75"
-                              }`}
-                              onClick={() => onSeek(line.time)}
-                              title="Klik untuk lompat ke lirik ini"
-                            >
-                              {isActive && (
-                                <span className="hidden lg:inline-block w-2 h-2 rounded-full bg-[#22c527] mr-3 align-middle shadow-[0_0_8px_rgba(34,197,39,0.8)]"></span>
-                              )}
-                              <span>{line.content}</span>
-                            </motion.p>
-                          );
-                        })
-                      ) : (
-                        <div className="flex flex-col items-center justify-center my-auto py-12 text-center select-none">
-                          <div className="relative mb-5">
-                            <div
-                              className={`w-24 h-24 rounded-full border border-white/15 bg-gradient-to-br from-neutral-800 via-neutral-900 to-black flex items-center justify-center shadow-2xl shadow-black ${
-                                isPlaying ? "animate-spin-slow" : ""
-                              }`}
-                            >
-                              <div className="w-9 h-9 rounded-full bg-[#22c527]/15 border border-[#22c527]/40 flex items-center justify-center text-[#22c527] shadow-inner">
-                                <i className="ri-disc-fill text-xl"></i>
-                              </div>
-                            </div>
-                            {isPlaying && (
-                              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg">
-                                <span className="w-0.5 h-3 bg-[#22c527] rounded-full animate-music-bar-1"></span>
-                                <span className="w-0.5 h-4.5 bg-[#22c527] rounded-full animate-music-bar-2"></span>
-                                <span className="w-0.5 h-2 bg-[#22c527] rounded-full animate-music-bar-3"></span>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-sm font-bold text-white/90">
-                            Lirik Instrumental / Audio
-                          </p>
-                          <p className="text-xs text-white/40 mt-1 max-w-xs">
-                            Nikmati alunan irama dan suasana musiknya
-                          </p>
-                        </div>
-                      )}
-                      <div className="h-20 lg:h-50"></div>
-                    </div>
-                  )}
-
-                  {/* TAB CONTENT: UP NEXT QUEUE */}
-                  {activeRightTab === "queue" && (
-                    <div className="w-full flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
-                      {priorityQueue.length > 0 && (
-                        <section className="mb-3">
-                          <div className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#22c527]">
-                            Putar berikutnya
-                          </div>
-                          <div className="space-y-2">
-                            {priorityQueue.map((item, idx) => (
-                              <div
-                                key={`priority-${item.id}`}
-                                className="flex items-center gap-2 p-2 rounded-2xl bg-[#22c527]/10 border border-[#22c527]/25"
-                              >
-                                <span className="w-5 text-center text-xs font-mono text-[#22c527]">
-                                  {idx + 1}
-                                </span>
-                                <img
-                                  src={item.cover}
-                                  alt={item.title}
-                                  className="w-10 h-10 rounded-xl object-cover"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="text-xs font-bold truncate text-white">
-                                    {item.title}
-                                  </h5>
-                                  <p className="text-[11px] text-white/50 truncate">
-                                    {item.artist}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {onMoveQueued && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        disabled={idx === 0}
-                                        onClick={() => onMoveQueued(idx, -1)}
-                                        className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
-                                        aria-label={`Naikkan ${item.title}`}
-                                      >
-                                        <i className="ri-arrow-up-s-line"></i>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        disabled={idx === priorityQueue.length - 1}
-                                        onClick={() => onMoveQueued(idx, 1)}
-                                        className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
-                                        aria-label={`Turunkan ${item.title}`}
-                                      >
-                                        <i className="ri-arrow-down-s-line"></i>
-                                      </button>
-                                    </>
-                                  )}
-                                  {onRemoveQueued && (
-                                    <button
-                                      type="button"
-                                      onClick={() => onRemoveQueued(item.id)}
-                                      className="w-7 h-7 rounded-full text-white/50 hover:bg-red-400/20 hover:text-red-200"
-                                      aria-label={`Hapus ${item.title} dari antrean`}
-                                    >
-                                      <i className="ri-close-line"></i>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      )}
-                      {playlist.map((item, idx) => {
-                        const isCurrent = item.id === currentSong.id;
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => onSelectSong && onSelectSong(item)}
-                            className={`flex items-center gap-3 p-2.5 rounded-2xl cursor-pointer transition ${
-                              isCurrent
-                                ? "bg-[#22c527]/15 border border-[#22c527]/40 text-white shadow-md shadow-[#22c527]/10"
-                                : "hover:bg-white/5 border border-transparent text-white/80"
+                      {activeRightTab === "lyrics" ? (
+                        isDesktop ? (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#22c527]/75">
+                            <i
+                              className="ri-sound-module-line"
+                              aria-hidden="true"
+                            />
+                            {lyricsStatus === "loading"
+                              ? "Memuat lirik"
+                              : lyricsStatus === "ready"
+                                ? "Auto-sync"
+                                : "Lirik tidak tersedia"}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsMobileLyricsFollowEnabled(
+                                (enabled) => !enabled,
+                              )
+                            }
+                            disabled={lyricsStatus !== "ready"}
+                            aria-pressed={isMobileLyricsFollowEnabled}
+                            aria-label={
+                              isMobileLyricsFollowEnabled
+                                ? "Matikan ikuti lirik otomatis"
+                                : "Ikuti lirik otomatis"
+                            }
+                            className={`inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                              isMobileLyricsFollowEnabled
+                                ? "border-[#22c527]/30 bg-[#22c527]/10 text-[#22c527]"
+                                : "border-white/10 bg-white/[0.04] text-white/55 hover:text-white/80"
                             }`}
                           >
-                            <span className="w-5 text-center text-xs font-mono text-white/40">
-                              {idx + 1}
-                            </span>
-                            <img
-                              src={item.cover}
-                              alt={item.title}
-                              className="w-10 h-10 rounded-xl object-cover"
+                            <i
+                              className={
+                                isMobileLyricsFollowEnabled
+                                  ? "ri-focus-3-fill"
+                                  : "ri-focus-3-line"
+                              }
+                              aria-hidden="true"
                             />
-                            {onPlayNext && !isCurrent && (
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onPlayNext(item);
+                            {lyricsStatus === "loading"
+                              ? "Memuat"
+                              : lyricsStatus !== "ready"
+                                ? "Tanpa lirik"
+                                : isMobileLyricsFollowEnabled
+                                  ? "Ikuti: aktif"
+                                  : "Ikuti lirik"}
+                          </button>
+                        )
+                      ) : (
+                        <span className="text-[10px] text-white/40">
+                          Pilih lagu untuk diputar
+                        </span>
+                      )}
+                    </div>
+
+                    {/* TAB CONTENT: LYRICS (CLEAN SPOTIFY-STYLE TYPOGRAPHY) */}
+                    {activeRightTab === "lyrics" && (
+                      <div
+                        ref={lyricsContainerRef}
+                        onWheel={handleManualLyricsScroll}
+                        onTouchStart={handleManualLyricsScroll}
+                        className="w-full flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-hide px-6 py-6 mask-gradient-vertical"
+                      >
+                        <div className="h-16 lg:h-40"></div>
+                        {lyrics.length > 0 ? (
+                          lyrics.map((line, i) => {
+                            const isActive = i === activeLyricIndex;
+                            return (
+                              <motion.p
+                                key={i}
+                                ref={(el) => {
+                                  lyricRefs.current[i] = el;
                                 }}
-                                className="ml-auto w-8 h-8 rounded-full bg-white/5 hover:bg-[#22c527] hover:text-black flex items-center justify-center text-white/60 transition"
-                                title="Putar berikutnya"
-                                aria-label={`Putar ${item.title} berikutnya`}
+                                animate={{
+                                  opacity: isActive ? 1 : 0.3,
+                                  scale: isActive ? 1.03 : 1,
+                                }}
+                                transition={{ duration: 0.25 }}
+                                className={`py-2 md:py-3 transition-all duration-300 cursor-pointer text-center lg:text-left tracking-normal leading-relaxed select-none ${
+                                  isActive
+                                    ? "text-lg sm:text-xl md:text-2xl font-black text-white drop-shadow-md"
+                                    : "text-sm sm:text-base md:text-lg font-bold text-white/35 hover:text-white/75"
+                                }`}
+                                onClick={() => onSeek(line.time)}
+                                title="Klik untuk lompat ke lirik ini"
                               >
-                                <i className="ri-skip-forward-mini-line"></i>
-                              </button>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <h5
-                                className={`text-xs font-bold truncate ${
-                                  isCurrent ? "text-[#22c527]" : "text-white"
+                                {isActive && (
+                                  <span className="hidden lg:inline-block w-2 h-2 rounded-full bg-[#22c527] mr-3 align-middle shadow-[0_0_8px_rgba(34,197,39,0.8)]"></span>
+                                )}
+                                <span>{line.content}</span>
+                              </motion.p>
+                            );
+                          })
+                        ) : (
+                          <div className="flex flex-col items-center justify-center my-auto py-12 text-center select-none">
+                            <div className="relative mb-5">
+                              <div
+                                className={`w-24 h-24 rounded-full border border-white/15 bg-gradient-to-br from-neutral-800 via-neutral-900 to-black flex items-center justify-center shadow-2xl shadow-black ${
+                                  isPlaying ? "animate-spin-slow" : ""
                                 }`}
                               >
-                                {item.title}
-                              </h5>
-                              <p className="text-[11px] text-white/50 truncate">
-                                {item.artist}
-                              </p>
-                            </div>
-                            {isCurrent && isPlaying && (
-                              <div className="flex items-center gap-0.5 px-2">
-                                <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-1 h-3"></span>
-                                <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-2 h-4"></span>
-                                <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-3 h-2"></span>
+                                <div className="w-9 h-9 rounded-full bg-[#22c527]/15 border border-[#22c527]/40 flex items-center justify-center text-[#22c527] shadow-inner">
+                                  <i className="ri-disc-fill text-xl"></i>
+                                </div>
                               </div>
-                            )}
+                              {isPlaying && (
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/90 px-2.5 py-1 rounded-full border border-white/10 shadow-lg">
+                                  <span className="w-0.5 h-3 bg-[#22c527] rounded-full animate-music-bar-1"></span>
+                                  <span className="w-0.5 h-4.5 bg-[#22c527] rounded-full animate-music-bar-2"></span>
+                                  <span className="w-0.5 h-2 bg-[#22c527] rounded-full animate-music-bar-3"></span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-sm font-bold text-white/90">
+                              {lyricsStatus === "loading"
+                                ? "Memuat lirik..."
+                                : "Lirik Belum Tersedia"}
+                            </p>
+                            <p className="text-xs text-white/40 mt-1 max-w-xs">
+                              {lyricsStatus === "loading"
+                                ? "Sedang mengambil file lirik untuk lagu ini."
+                                : "Lagu ini belum memiliki file lirik tersinkronisasi. Kamu tetap bisa menikmati musik tanpa lirik."}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                        )}
+                        <div className="h-20 lg:h-50"></div>
+                      </div>
+                    )}
+
+                    {/* TAB CONTENT: UP NEXT QUEUE */}
+                    {activeRightTab === "queue" && (
+                      <div className="w-full flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
+                        {priorityQueue.length > 0 && (
+                          <section className="mb-3">
+                            <div className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#22c527]">
+                              Putar berikutnya
+                            </div>
+                            <div className="space-y-2">
+                              {priorityQueue.map((item, idx) => (
+                                <div
+                                  key={`priority-${item.id}`}
+                                  className="flex items-center gap-2 p-2 rounded-2xl bg-[#22c527]/10 border border-[#22c527]/25"
+                                >
+                                  <span className="w-5 text-center text-xs font-mono text-[#22c527]">
+                                    {idx + 1}
+                                  </span>
+                                  <img
+                                    src={item.cover}
+                                    alt={item.title}
+                                    className="w-10 h-10 rounded-xl object-cover"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="text-xs font-bold truncate text-white">
+                                      {item.title}
+                                    </h5>
+                                    <p className="text-[11px] text-white/50 truncate">
+                                      {item.artist}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {onMoveQueued && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          disabled={idx === 0}
+                                          onClick={() => onMoveQueued(idx, -1)}
+                                          className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
+                                          aria-label={`Naikkan ${item.title}`}
+                                        >
+                                          <i className="ri-arrow-up-s-line"></i>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={
+                                            idx === priorityQueue.length - 1
+                                          }
+                                          onClick={() => onMoveQueued(idx, 1)}
+                                          className="w-7 h-7 rounded-full text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-20"
+                                          aria-label={`Turunkan ${item.title}`}
+                                        >
+                                          <i className="ri-arrow-down-s-line"></i>
+                                        </button>
+                                      </>
+                                    )}
+                                    {onRemoveQueued && (
+                                      <button
+                                        type="button"
+                                        onClick={() => onRemoveQueued(item.id)}
+                                        className="w-7 h-7 rounded-full text-white/50 hover:bg-red-400/20 hover:text-red-200"
+                                        aria-label={`Hapus ${item.title} dari antrean`}
+                                      >
+                                        <i className="ri-close-line"></i>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        )}
+                        {playlist.map((item, idx) => {
+                          const isCurrent = item.id === currentSong.id;
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => onSelectSong && onSelectSong(item)}
+                              className={`flex items-center gap-3 p-2.5 rounded-2xl cursor-pointer transition ${
+                                isCurrent
+                                  ? "bg-[#22c527]/15 border border-[#22c527]/40 text-white shadow-md shadow-[#22c527]/10"
+                                  : "hover:bg-white/5 border border-transparent text-white/80"
+                              }`}
+                            >
+                              <span className="w-5 text-center text-xs font-mono text-white/40">
+                                {idx + 1}
+                              </span>
+                              <img
+                                src={item.cover}
+                                alt={item.title}
+                                className="w-10 h-10 rounded-xl object-cover"
+                              />
+                              {onPlayNext && !isCurrent && (
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onPlayNext(item);
+                                  }}
+                                  className="ml-auto w-8 h-8 rounded-full bg-white/5 hover:bg-[#22c527] hover:text-black flex items-center justify-center text-white/60 transition"
+                                  title="Putar berikutnya"
+                                  aria-label={`Putar ${item.title} berikutnya`}
+                                >
+                                  <i className="ri-skip-forward-mini-line"></i>
+                                </button>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h5
+                                  className={`text-xs font-bold truncate ${
+                                    isCurrent ? "text-[#22c527]" : "text-white"
+                                  }`}
+                                >
+                                  {item.title}
+                                </h5>
+                                <p className="text-[11px] text-white/50 truncate">
+                                  {item.artist}
+                                </p>
+                              </div>
+                              {isCurrent && isPlaying && (
+                                <div className="flex items-center gap-0.5 px-2">
+                                  <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-1 h-3"></span>
+                                  <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-2 h-4"></span>
+                                  <span className="w-1 bg-[#22c527] rounded-full animate-music-bar-3 h-2"></span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

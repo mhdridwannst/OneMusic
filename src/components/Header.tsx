@@ -5,12 +5,16 @@ interface HeaderProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   totalSongsCount?: number;
+  userEmail?: string | null;
+  onAccountClick?: () => void;
 }
 
 export default function Header({
   searchTerm,
   setSearchTerm,
   totalSongsCount = 0,
+  userEmail = null,
+  onAccountClick,
 }: HeaderProps) {
   const [isShortcutOpen, setIsShortcutOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +98,9 @@ export default function Header({
               className="w-full bg-white/6 hover:bg-white/9 focus:bg-white/12 border border-white/10 focus:border-[#22c527]/50 rounded-2xl py-2.5 pl-10 pr-10 text-xs md:text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-[#22c527]/20 transition-all shadow-inner"
             />
 
-            {searchTerm && (
+            {searchTerm ? (
               <button
+                type="button"
                 onClick={() => setSearchTerm("")}
                 aria-label="Hapus pencarian"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/40 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] rounded-full"
@@ -103,6 +108,8 @@ export default function Header({
               >
                 <i className="ri-close-circle-fill text-base"></i>
               </button>
+            ) : (
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-white/30 md:block">/</kbd>
             )}
           </div>
 
@@ -118,7 +125,27 @@ export default function Header({
               <i className="ri-keyboard-line text-base md:text-lg"></i>
             </button>
 
-            {/* Profile Avatar Badge */}
+            {/* Account / Guest Mode */}
+            {onAccountClick && (
+              <button
+                type="button"
+                onClick={onAccountClick}
+                aria-label={userEmail ? `Akun ${userEmail}` : "Masuk atau buat akun OneMusic"}
+                title={userEmail || "Masuk / Daftar"}
+                className={`flex h-9 items-center gap-2 rounded-2xl border px-2.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] md:h-10 ${
+                  userEmail
+                    ? "border-[#22c527]/30 bg-[#22c527]/10 text-[#22c527]"
+                    : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <i className={`${userEmail ? "ri-user-smile-fill" : "ri-user-3-line"} text-base`} />
+                <span className="hidden max-w-28 truncate text-[11px] font-bold sm:inline">
+                  {userEmail ? userEmail.split("@")[0] : "Masuk"}
+                </span>
+              </button>
+            )}
+
+            {/* GitHub Repository */}
             <a
               href="https://github.com/wannn-sion95/OneMusic.git"
               target="_blank"

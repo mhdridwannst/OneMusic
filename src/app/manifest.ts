@@ -14,21 +14,22 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["music", "entertainment"],
     icons: [
       {
-        src: "/onemusic.png",
+        src: "/icons/onemusic-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/onemusic-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/onemusic.png",
+        src: "/icons/onemusic-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
-      },
-      {
-        src: "/favicon.ico",
-        sizes: "any",
-        type: "image/x-icon",
       },
     ],
   };

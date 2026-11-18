@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Song } from "@/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { defaultSongs } from "@/data/defaultSongs";
+import { useAuth } from "@/hooks/useAuth";
+import { usePlaylistLibrary, type Playlist } from "@/hooks/usePlaylistLibrary";
 
 // KOMPONEN UI
 import Header from "@/components/Header";
@@ -20,12 +22,17 @@ import MiniPlayer from "@/components/MiniPlayer";
 import FullPlayer from "@/components/FullPlayer";
 import Toast from "@/components/Toast";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import AuthModal from "@/components/AuthModal";
+import PlaylistPickerModal from "@/components/PlaylistPickerModal";
+import PlaylistLibrary from "@/components/PlaylistLibrary";
 
 export default function Home() {
   // --- STATE ---
   const [songs, setSongs] = useState<Song[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
-  const [playlistSongIds, setPlaylistSongIds] = useState<number[]>([]);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [pickerSong, setPickerSong] = useState<Song | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -40,6 +47,19 @@ export default function Home() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const sharedSongHandled = useRef(false);
+
+  const auth = useAuth();
+  const playlistLibrary = usePlaylistLibrary(auth.user, auth.isReady);
+  const {
+    playlists,
+    isLoading: isPlaylistsLoading,
+    loadError: playlistLoadError,
+    isCloudSynced,
+  } = playlistLibrary;
+  const playlistSongIds = useMemo(
+    () => Array.from(new Set(playlists.flatMap((playlist) => playlist.songIds))),
+    [playlists],
+  );
 
   // Hook Player
   const player = useAudioPlayer(songs);
@@ -126,26 +146,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem("onemusic_playlist") || "[]",
-      );
-      if (
-        Array.isArray(saved) &&
-        saved.every((id): id is number => Number.isInteger(id))
-      ) {
-        setPlaylistSongIds(saved);
-      }
-    } catch (error) {
-      console.warn("Failed to load playlist:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("onemusic_playlist", JSON.stringify(playlistSongIds));
-  }, [playlistSongIds]);
-
-  useEffect(() => {
     if (!player.currentSong) return;
     setRecentlyPlayed((prev) => {
       const filtered = prev.filter((s) => s.id !== player.currentSong!.id);
@@ -199,7 +199,10 @@ export default function Home() {
       if (activeTab === "Favorites") {
         matchesTab = player.likedSongs.includes(song.id);
       } else if (activeTab === "My Playlist") {
-        matchesTab = playlistSongIds.includes(song.id);
+        const selectedPlaylist = playlists.find(
+          (playlist) => playlist.id === selectedPlaylistId,
+        );
+        matchesTab = Boolean(selectedPlaylist?.songIds.includes(song.id));
       } else if (activeTab !== "All Songs") {
         const songGenre = (song.genre || "").toLowerCase();
         const tab = activeTab.toLowerCase();
@@ -278,7 +281,8 @@ export default function Home() {
     searchTerm,
     songs,
     player.likedSongs,
-    playlistSongIds,
+    playlists,
+    selectedPlaylistId,
   ]);
 
   const recommendedSongs = useMemo(() => {
@@ -309,7 +313,7 @@ export default function Home() {
 
   // Sync playlist aktif ke hook player
   useEffect(() => {
-    if (!isLoading && displayedSongs.length > 0) {
+    if (!isLoading) {
       player.setPlaylist(displayedSongs);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -341,31 +345,44 @@ export default function Home() {
   };
 
   const handleTogglePlaylist = (song: Song) => {
-    const isInPlaylist = playlistSongIds.includes(song.id);
-    setPlaylistSongIds((current) =>
-      isInPlaylist
-        ? current.filter((id) => id !== song.id)
-        : [...current, song.id],
-    );
+    setPickerSong(song);
+  };
+
+  const handleAddSongToPlaylist = async (playlistId: string, songId: number) => {
+    const added = await playlistLibrary.addSongToPlaylist(playlistId, songId);
+    const song = songs.find((item) => item.id === songId);
+    if (added && song) triggerToast(`"${song.title}" ditambahkan ke playlist`);
+  };
+
+  const handleRemoveSongFromPlaylist = async (playlistId: string, songId: number) => {
+    await playlistLibrary.removeSongFromPlaylist(playlistId, songId);
+    const song = songs.find((item) => item.id === songId);
+    if (song) triggerToast(`"${song.title}" dihapus dari playlist`);
+  };
+
+  const handlePlayAllPlaylist = (playlist: Playlist, shuffle = false) => {
+    const playlistSongs = playlist.songIds
+      .map((id) => songs.find((song) => song.id === id))
+      .filter((song): song is Song => Boolean(song));
+
+    if (playlistSongs.length === 0) {
+      triggerToast("Playlist ini belum memiliki lagu yang tersedia");
+      return;
+    }
+
+    setSelectedPlaylistId(playlist.id);
+    player.setPlaylist(playlistSongs);
+    if (shuffle) {
+      if (!player.isShuffle) player.toggleShuffle();
+      const randomIndex = Math.floor(Math.random() * playlistSongs.length);
+      player.playSong(playlistSongs[randomIndex]);
+    } else {
+      if (player.isShuffle) player.toggleShuffle();
+      player.playSong(playlistSongs[0]);
+    }
     triggerToast(
-      isInPlaylist
-        ? `"${song.title}" dihapus dari Playlist`
-        : `"${song.title}" ditambahkan ke Playlist`,
+      `${shuffle ? "Memutar acak" : "Memutar"} ${playlistSongs.length} lagu dari "${playlist.name}"`,
     );
-  };
-
-  const handleClearPlaylist = () => {
-    if (playlistSongIds.length === 0) return;
-    if (!window.confirm("Hapus semua lagu dari Playlist Saya?")) return;
-    setPlaylistSongIds([]);
-    triggerToast("Playlist Saya berhasil dikosongkan");
-  };
-
-  const handlePlayAllPlaylist = () => {
-    if (displayedSongs.length === 0) return;
-    player.setPlaylist(displayedSongs);
-    player.playSong(displayedSongs[0]);
-    triggerToast(`Memutar ${displayedSongs.length} lagu dari Playlist Saya`);
   };
 
   const handleShuffleAll = () => {
@@ -375,7 +392,7 @@ export default function Home() {
     if (!player.isShuffle) {
       player.toggleShuffle();
     }
-    triggerToast("Memutar lagu secara acak");
+    triggerToast("Memutar acak lagu 🔀");
   };
 
   // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
@@ -493,8 +510,27 @@ export default function Home() {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         totalSongsCount={songs.length}
+        userEmail={auth.user?.email ?? null}
+        onAccountClick={() => setIsAuthModalOpen(true)}
       />
       <Toast message={toastMsg} isVisible={showToast} />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        user={auth.user}
+        isConfigured={auth.isConfigured}
+        onSignIn={auth.signIn}
+        onSignUp={auth.signUp}
+        onSignOut={auth.signOut}
+      />
+      <PlaylistPickerModal
+        song={pickerSong}
+        playlists={playlists}
+        onClose={() => setPickerSong(null)}
+        onCreatePlaylist={playlistLibrary.createPlaylist}
+        onAddSong={handleAddSongToPlaylist}
+        onRemoveSong={handleRemoveSongFromPlaylist}
+      />
       {loadError && (
         <div
           role="alert"
@@ -504,7 +540,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-44 px-4 md:px-8 z-10">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-44 pt-3 md:px-8 md:pt-5 z-10">
         <div className="max-w-7xl mx-auto">
           {/* Hero Carousel hanya tampil ketika tidak sedang search & di tab Semua Lagu */}
           {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (
@@ -553,6 +589,8 @@ export default function Home() {
                 likedSongs={player.likedSongs}
                 onPlay={player.playSong}
                 onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
               />
 
               {/* Row 2: Indonesian Hits */}
@@ -566,6 +604,8 @@ export default function Home() {
                 likedSongs={player.likedSongs}
                 onPlay={player.playSong}
                 onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
                 onViewAll={() => setActiveTab("Indonesian Hits")}
               />
 
@@ -580,6 +620,8 @@ export default function Home() {
                 likedSongs={player.likedSongs}
                 onPlay={player.playSong}
                 onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
                 onViewAll={() => setActiveTab("K-Pop")}
               />
 
@@ -594,6 +636,8 @@ export default function Home() {
                 likedSongs={player.likedSongs}
                 onPlay={player.playSong}
                 onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
                 onViewAll={() => setActiveTab("Lo-Fi / Ambient")}
               />
             </>
@@ -606,14 +650,37 @@ export default function Home() {
             sortBy={sortBy}
             setSortBy={setSortBy}
             favoritesCount={player.likedSongs.length}
-            playlistCount={playlistSongIds.length}
-            onClearPlaylist={handleClearPlaylist}
-            onPlayAll={handlePlayAllPlaylist}
+            playlistCount={playlists.length}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onShuffleAll={handleShuffleAll}
+            onShuffleAll={activeTab === "My Playlist" ? undefined : handleShuffleAll}
           />
 
+          {activeTab === "My Playlist" ? (
+            <PlaylistLibrary
+              playlists={playlists}
+              songs={songs}
+              selectedPlaylistId={selectedPlaylistId}
+              isLoading={isPlaylistsLoading}
+              loadError={playlistLoadError}
+              isCloudSynced={isCloudSynced}
+              onSelectPlaylist={setSelectedPlaylistId}
+              onCreatePlaylist={playlistLibrary.createPlaylist}
+              onRenamePlaylist={playlistLibrary.renamePlaylist}
+              onDeletePlaylist={playlistLibrary.deletePlaylist}
+              onPlaySong={(song, playlist) => {
+                const playlistSongs = playlist.songIds
+                  .map((id) => songs.find((item) => item.id === id))
+                  .filter((item): item is Song => Boolean(item));
+                player.setPlaylist(playlistSongs);
+                player.playSong(song);
+              }}
+              onPlayAll={handlePlayAllPlaylist}
+              onRemoveSong={handleRemoveSongFromPlaylist}
+              onMoveSong={playlistLibrary.moveSong}
+            />
+          ) : (
+            <>
           <div className="flex items-end justify-between gap-4 mb-4 px-1">
             <div>
               <p className="section-eyebrow">
@@ -648,27 +715,6 @@ export default function Home() {
               <p className="text-white/40 text-xs max-w-sm mx-auto mb-4">
                 Tekan tombol hati pada kartu lagu atau player untuk menambahkan
                 lagu ke koleksi favoritmu.
-              </p>
-              <button
-                onClick={() => setActiveTab("All Songs")}
-                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition"
-              >
-                Jelajahi Semua Lagu
-              </button>
-            </div>
-          )}
-
-          {activeTab === "My Playlist" && displayedSongs.length === 0 && (
-            <div className="text-center py-20 bg-white/2 rounded-3xl border border-white/5 my-6">
-              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-[#22c527]">
-                <i className="ri-play-list-2-line text-3xl"></i>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">
-                Playlist Masih Kosong
-              </h3>
-              <p className="text-white/40 text-xs max-w-sm mx-auto mb-4">
-                Tekan tombol tambah pada cover lagu untuk menyimpan lagu
-                favoritmu di sini.
               </p>
               <button
                 onClick={() => setActiveTab("All Songs")}
@@ -726,6 +772,8 @@ export default function Home() {
                 onTogglePlaylist={handleTogglePlaylist}
               />
             ))}
+            </>
+          )}
 
           <Footer />
         </div>

@@ -1,5 +1,11 @@
-const CACHE_NAME = "onemusic-shell-v1";
-const OFFLINE_URLS = ["/", "/manifest.webmanifest", "/favicon.ico", "/onemusic.png"];
+const CACHE_NAME = "onemusic-shell-v2";
+const OFFLINE_URLS = [
+  "/",
+  "/manifest.webmanifest",
+  "/favicon.ico",
+  "/icons/onemusic-192.png",
+  "/icons/onemusic-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

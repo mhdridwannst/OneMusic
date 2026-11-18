@@ -73,7 +73,9 @@ OneMusic adalah aplikasi musik personal berbasis Next.js dan TypeScript. Antarmu
 - Katalog lokal-first dengan sinkronisasi Supabase dan fallback.
 - Play, pause, next, previous, shuffle, repeat, seek, volume, dan playback rate.
 - Queue prioritas: tambah, hapus, ubah urutan, persistence, dan autoplay.
-- Playlist pribadi, favorit, recently played, dan rekomendasi lagu.
+- Multiple personal playlists: create, rename, delete, add/remove lagu, dan ubah urutan.
+- Guest playlist tersimpan lokal; akun Supabase menyinkronkan playlist ke cloud.
+- Favorit, recently played, dan rekomendasi lagu.
 - Pencarian berdasarkan judul, artis, atau genre.
 - Lirik `.lrc` dengan highlight dan scroll otomatis.
 - Deep link lagu lewat `?song=<id>` dan tombol share.
@@ -106,7 +108,7 @@ File MP3 tidak disimpan di GitHub. Folder `public/music/` diabaikan oleh Git aga
 
 ## Menjalankan secara lokal
 
-**Prasyarat:** Node.js 18+, npm, project Supabase, dan file MP3 personal di `public/music/`.
+**Prasyarat:** Node.js 20.9+, npm, project Supabase, dan (opsional untuk development lokal) file MP3 di `public/music/`. Untuk menjalankan aplikasi tanpa koneksi database, katalog fallback tetap tersedia; audio production tetap membutuhkan URL Supabase Storage.
 
 ```bash
 git clone https://github.com/mhdridwannst/OneMusic.git
@@ -114,7 +116,7 @@ cd OneMusic
 npm install
 ```
 
-Buat `.env.local` di root project:
+Salin `.env.example` menjadi `.env.local` di root project, lalu ganti placeholder dengan nilai dari project Supabase lo:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://project-ref.supabase.co
@@ -156,6 +158,30 @@ create policy "Public read access"
   using (true);
 ```
 
+### Personal playlists dan authentication
+
+Fitur playlist mendukung dua mode:
+
+- **Guest:** playlist disimpan di `localStorage` browser.
+- **Akun:** setelah user masuk melalui Supabase Auth, playlist disimpan di PostgreSQL dan dilindungi Row Level Security (RLS).
+
+Jalankan SQL berikut satu kali melalui **Supabase Dashboard → SQL Editor**:
+
+```text
+supabase/migrations/20261117_personal_playlists.sql
+```
+
+Migration membuat tabel `playlists` dan `playlist_songs`, memberikan hak akses untuk role `authenticated`, serta memasang policy RLS agar setiap akun hanya dapat membaca dan mengubah playlist miliknya. `song_id` sengaja tidak memakai foreign key ke tabel `songs`, karena katalog aplikasi juga dapat memuat lagu dari `src/data/defaultSongs.ts`.
+
+Setelah migration dijalankan:
+
+1. Pastikan `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` sudah tersedia di `.env.local` dan Vercel.
+2. Aktifkan Email provider di **Supabase → Authentication → Providers**.
+3. Atur Site URL dan Redirect URLs di Supabase Authentication untuk domain lokal dan production.
+4. Buka OneMusic, pilih **Masuk**, lalu buat akun atau login.
+
+Saat pertama kali login, playlist guest yang tersimpan di browser akan dicoba diimpor ke akun tersebut. Jika belum menjalankan SQL migration, mode guest tetap dapat digunakan; fitur cloud akan menampilkan error sampai tabel dan RLS tersedia.
+
 ### Storage audio
 
 1. Buka **Storage** di dashboard Supabase.
@@ -188,7 +214,7 @@ npm run lint
 npm run build
 ```
 
-`validate:catalog` memeriksa ID lagu, duplikasi audio, serta keberadaan asset audio dan cover. `npm run build` memastikan aplikasi bisa dikompilasi untuk production.
+`validate:catalog` memeriksa ID, referensi audio yang duplikat, serta keberadaan cover dan lirik. Karena audio production disimpan di Supabase Storage dan folder `public/music/` tidak di-commit, pemeriksaan keberadaan MP3 lokal dilewati jika folder tersebut tidak tersedia. Saat ingin memvalidasi MP3 lokal secara eksplisit, jalankan `npm run validate:catalog -- --require-local-audio`. `npm run build` memastikan aplikasi bisa dikompilasi untuk production.
 
 ## Deploy ke Vercel
 
@@ -233,8 +259,9 @@ src/
 └── types/                # TypeScript types
 public/
 ├── images/               # Cover dan artwork
+├── icons/                # Ikon PWA 192px, 512px, dan maskable
 ├── lyrics/               # File lirik .lrc
-└── music/                # Audio lokal, diabaikan oleh Git
+└── music/                # Audio lokal untuk development, diabaikan oleh Git
 scripts/
 ├── upload-audio-to-supabase.mjs
 └── validate-catalog.mjs

@@ -153,7 +153,7 @@ export default function SongTableView({
                         ? "text-[#22c527]"
                         : "text-white/20 hover:text-white group-hover:text-white/50"
                     }`}
-                    title={isInPlaylist ? "Hapus dari Playlist" : "Tambah ke Playlist"}
+                    title={isInPlaylist ? "Lagu ada di playlist · Kelola playlist" : "Tambahkan ke playlist"}
                   >
                     <i
                       className={`${
@@ -175,7 +175,7 @@ export default function SongTableView({
                     className={`md:hidden p-1.5 transition cursor-pointer ${
                       isInPlaylist ? "text-[#22c527]" : "text-white/40 hover:text-white"
                     }`}
-                    title={isInPlaylist ? "Hapus dari Playlist" : "Tambah ke Playlist"}
+                    title={isInPlaylist ? "Lagu ada di playlist · Kelola playlist" : "Tambahkan ke playlist"}
                   >
                     <i
                       className={`${

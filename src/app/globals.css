@@ -214,3 +214,59 @@ select {
     transparent 100%
   );
 }
+
+/* OneMusic experience polish: typography, focus and tactile controls */
+html {
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid rgba(34, 197, 39,  0.92);
+  outline-offset: 3px;
+}
+
+:where(button, a, input, textarea, select):disabled {
+  cursor: not-allowed;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* Softer premium scrollbar, with a useful target on desktop */
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(9, 9, 11, 0.72);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border: 3px solid #09090b;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 197, 39, 0.72);
+  }
+}
+
+/* Avoid hover-only UI becoming unavailable on touch devices */
+@media (hover: none) {
+  .touch-visible-action {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
