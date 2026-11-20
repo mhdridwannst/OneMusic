@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import { Song } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { triggerHaptic } from "@/lib/haptics";
 
 interface MiniPlayerProps {
   currentSong: Song | null;
@@ -117,7 +118,7 @@ export default function MiniPlayer({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 280 }}
-        className="fixed bottom-3 md:bottom-5 left-3 right-3 md:left-6 md:right-6 z-50 max-w-5xl mx-auto"
+        className="fixed bottom-[64px] md:bottom-5 left-2 right-2 sm:left-3 sm:right-3 md:left-6 md:right-6 z-40 max-w-5xl mx-auto"
       >
         <div
           onClick={onExpand}
@@ -220,6 +221,7 @@ export default function MiniPlayer({
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                triggerHaptic("medium");
                 onToggleLike();
               }}
               className={`p-2 rounded-full transition-transform active:scale-125 ml-1 hidden sm:flex items-center justify-center cursor-pointer ${
@@ -253,6 +255,7 @@ export default function MiniPlayer({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  triggerHaptic("light");
                   onPrev();
                 }}
                 className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"
@@ -266,6 +269,7 @@ export default function MiniPlayer({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  triggerHaptic("heavy");
                   onPlayPause();
                 }}
                 className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition cursor-pointer ${
@@ -287,6 +291,7 @@ export default function MiniPlayer({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  triggerHaptic("light");
                   onNext();
                 }}
                 className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-white/60 hover:text-white hover:scale-110 active:scale-95 transition cursor-pointer"

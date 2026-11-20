@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Song } from "@/types";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useDragControls } from "framer-motion";
+import { triggerHaptic } from "@/lib/haptics";
+import EqualizerModal from "./EqualizerModal";
 
 interface FullPlayerProps {
   isOpen: boolean;
@@ -113,7 +115,10 @@ export default function FullPlayer({
     useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const [showEqModal, setShowEqModal] = useState(false);
   const [imageErrorSongId, setImageErrorSongId] = useState<number | null>(null);
+
+  const dragControls = useDragControls();
 
   const lyricRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -299,12 +304,13 @@ export default function FullPlayer({
     onVolumeChange(newVol);
   };
 
-  // Drag down to dismiss khusus di area Header agar tidak bentrok dengan scroll lirik
+  // Drag down to dismiss seluruh sheet modal dari top header di mobile
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo,
   ) => {
-    if (info.offset.y > 80 || info.velocity.y > 400) {
+    if (info.offset.y > 100 || info.velocity.y > 350) {
+      triggerHaptic("light");
       onClose();
     }
   };
@@ -321,11 +327,24 @@ export default function FullPlayer({
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 240 }}
+          drag={isDesktop ? false : "y"}
+          dragControls={dragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0, bottom: 0.7 }}
+          onDragEnd={handleDragEnd}
           className="fixed inset-0 z-100 bg-[#09090b] text-white flex flex-col h-dvh select-none"
           role="dialog"
           aria-modal="true"
           aria-label={`Player: ${currentSong.title}`}
         >
+          {/* EQUALIZER MODAL */}
+          <EqualizerModal
+            isOpen={showEqModal}
+            onClose={() => setShowEqModal(false)}
+            isPlaying={isPlaying}
+          />
+
           {/* DYNAMIC AMBIENT BACKDROP */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div
@@ -336,15 +355,17 @@ export default function FullPlayer({
           </div>
 
           {/* TOP HEADER DENGAN DRAG TO DISMISS HANDLE KHUSUS MOBILE */}
-          <motion.div
-            drag={isDesktop ? false : "y"}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.4}
-            onDragEnd={handleDragEnd}
-            className="relative z-30 flex-none flex items-center justify-between px-4 sm:px-8 py-3 lg:py-5 border-b border-white/5 cursor-grab active:cursor-grabbing"
+          <div
+            onPointerDown={(e) => {
+              if (!isDesktop) dragControls.start(e);
+            }}
+            className="relative z-30 flex-none flex items-center justify-between px-4 sm:px-8 py-3 lg:py-5 border-b border-white/5 cursor-grab active:cursor-grabbing touch-none"
           >
             <button
-              onClick={onClose}
+              onClick={() => {
+                triggerHaptic("light");
+                onClose();
+              }}
               className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center active:scale-90 transition cursor-pointer"
               title="Tutup Player"
               aria-label="Tutup player"
@@ -354,7 +375,7 @@ export default function FullPlayer({
 
             {/* Pull Down Pill Handle & Title */}
             <div className="flex flex-col items-center">
-              <div className="w-12 h-1.5 bg-white/30 rounded-full mb-2 lg:hidden shadow-sm"></div>
+              <div className="w-12 h-1.5 bg-white/40 hover:bg-[#22c527] rounded-full mb-2 lg:hidden shadow-sm transition-colors"></div>
               <span className="text-[10px] sm:text-[11px] font-bold tracking-[2.5px] uppercase text-white/50">
                 Now Playing
               </span>
@@ -363,13 +384,30 @@ export default function FullPlayer({
               </span>
             </div>
 
-            {/* SPEED, SLEEP TIMER & FAVORITE ACTIONS */}
-            <div className="relative flex items-center gap-2">
+            {/* SPEED, SLEEP TIMER, EQUALIZER & FAVORITE ACTIONS */}
+            <div className="relative flex items-center gap-1.5 sm:gap-2">
+              {/* EQUALIZER & BASS BOOST BUTTON */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setShowEqModal(true);
+                  setShowTimerMenu(false);
+                  setShowSpeedMenu(false);
+                }}
+                className="h-9 sm:h-10 px-2.5 sm:px-3 rounded-full border border-white/10 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition flex items-center gap-1.5 cursor-pointer text-xs font-bold"
+                title="Audio Equalizer & Bass Boost"
+              >
+                <i className="ri-equalizer-line text-sm text-[#22c527]"></i>
+                <span className="hidden sm:inline font-mono">EQ</span>
+              </button>
+
               {/* SLEEP TIMER BUTTON & POPOVER */}
               {onSetSleepTimer && (
                 <div className="relative">
                   <button
                     onClick={() => {
+                      triggerHaptic("light");
                       setShowTimerMenu((p) => !p);
                       setShowSpeedMenu(false);
                     }}
@@ -517,7 +555,7 @@ export default function FullPlayer({
                 <span className="hidden sm:inline">Lirik & Queue</span>
               </button>
             </div>
-          </motion.div>
+          </div>
 
           {/* MAIN CONTENT AREA */}
           <div className="relative z-10 flex-1 w-full overflow-hidden flex flex-col justify-start lg:justify-center">
@@ -616,7 +654,10 @@ export default function FullPlayer({
                   <div className="flex items-center justify-between px-2 mb-4">
                     {/* Shuffle */}
                     <button
-                      onClick={onToggleShuffle}
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        onToggleShuffle();
+                      }}
                       className={`transition active:scale-90 p-2 cursor-pointer ${
                         isShuffle
                           ? "text-[#22c527] drop-shadow-[0_0_8px_rgba(34,197,39,0.6)]"
@@ -632,7 +673,10 @@ export default function FullPlayer({
 
                     {/* Prev */}
                     <button
-                      onClick={onPrev}
+                      onClick={() => {
+                        triggerHaptic("light");
+                        onPrev();
+                      }}
                       className="text-white hover:text-white/70 transition active:scale-90 p-2 cursor-pointer"
                       title="Lagu Sebelumnya"
                     >
@@ -641,7 +685,10 @@ export default function FullPlayer({
 
                     {/* Play / Pause Main Button with Radiant Neon Aura */}
                     <button
-                      onClick={onPlayPause}
+                      onClick={() => {
+                        triggerHaptic("heavy");
+                        onPlayPause();
+                      }}
                       className={`w-16 h-16 md:w-18 md:h-18 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition cursor-pointer ${
                         isPlaying
                           ? "bg-[#22c527] text-black shadow-[0_0_40px_rgba(34,197,39,0.5)] ring-4 ring-[#22c527]/20"
@@ -658,7 +705,10 @@ export default function FullPlayer({
 
                     {/* Next */}
                     <button
-                      onClick={onNext}
+                      onClick={() => {
+                        triggerHaptic("light");
+                        onNext();
+                      }}
                       className="text-white hover:text-white/70 transition active:scale-90 p-2 cursor-pointer"
                       title="Lagu Berikutnya"
                     >
@@ -667,7 +717,10 @@ export default function FullPlayer({
 
                     {/* Repeat */}
                     <button
-                      onClick={onToggleRepeat}
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        onToggleRepeat();
+                      }}
                       className={`transition active:scale-90 p-2 cursor-pointer ${
                         repeatMode !== "off"
                           ? "text-[#22c527] drop-shadow-[0_0_8px_rgba(34,197,39,0.6)]"

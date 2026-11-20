@@ -25,6 +25,7 @@ import SkeletonLoader from "@/components/SkeletonLoader";
 import AuthModal from "@/components/AuthModal";
 import PlaylistPickerModal from "@/components/PlaylistPickerModal";
 import PlaylistLibrary from "@/components/PlaylistLibrary";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 export default function Home() {
   // --- STATE ---
@@ -540,7 +541,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-44 pt-3 md:px-8 md:pt-5 z-10">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-52 md:pb-44 pt-3 md:px-8 md:pt-5 z-10">
         <div className="max-w-7xl mx-auto">
           {/* Hero Carousel hanya tampil ketika tidak sedang search & di tab Semua Lagu */}
           {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (
@@ -881,6 +882,28 @@ export default function Home() {
 
       {/* Floating Scroll to Top Button */}
       <ScrollToTop />
+
+      {/* Mobile Bottom Navigation Bar (Dock Bawah Khusus HP) */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          if (searchTerm) setSearchTerm("");
+        }}
+        onSearchClick={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          const searchInput = document.querySelector(
+            'input[aria-label="Cari lagu, musisi, atau genre"]',
+          ) as HTMLInputElement | null;
+          if (searchInput) {
+            setTimeout(() => searchInput.focus(), 250);
+          }
+        }}
+        onAccountClick={() => setIsAuthModalOpen(true)}
+        favoritesCount={player.likedSongs.length}
+        playlistCount={playlists.length}
+        userEmail={auth.user?.email ?? null}
+      />
     </main>
   );
 }

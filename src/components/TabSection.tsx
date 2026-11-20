@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { triggerHaptic } from "@/lib/haptics";
 
 interface TabSectionProps {
   activeTab: string;
@@ -46,7 +47,10 @@ export default function TabSection({
           return (
             <button
               key={cat.id}
-              onClick={() => setActiveTab(cat.id)}
+              onClick={() => {
+                triggerHaptic("selection");
+                setActiveTab(cat.id);
+              }}
               aria-pressed={isActive}
               className="relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
             >
@@ -105,7 +109,10 @@ export default function TabSection({
         {onShuffleAll && (
           <button
             type="button"
-            onClick={onShuffleAll}
+            onClick={() => {
+              triggerHaptic("medium");
+              onShuffleAll();
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-[#22c527] hover:text-black border border-white/10 text-white text-xs font-bold transition cursor-pointer"
             title="Putar acak semua lagu"
           >
@@ -121,9 +128,10 @@ export default function TabSection({
           <span className="text-white/40 hidden sm:inline">Urutkan:</span>
           <select
             value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as "default" | "title" | "artist")
-            }
+            onChange={(e) => {
+              triggerHaptic("selection");
+              setSortBy(e.target.value as "default" | "title" | "artist");
+            }}
             aria-label="Urutkan lagu"
             className="bg-transparent text-white font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] rounded cursor-pointer pr-1"
           >
@@ -139,7 +147,10 @@ export default function TabSection({
           <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5 shadow-sm">
             <button
               type="button"
-              onClick={() => onViewModeChange("grid")}
+              onClick={() => {
+                triggerHaptic("light");
+                onViewModeChange("grid");
+              }}
               className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer ${
                 viewMode === "grid"
                   ? "bg-[#22c527] text-black shadow-sm"
@@ -152,7 +163,10 @@ export default function TabSection({
             </button>
             <button
               type="button"
-              onClick={() => onViewModeChange("list")}
+              onClick={() => {
+                triggerHaptic("light");
+                onViewModeChange("list");
+              }}
               className={`w-7 h-7 rounded-full flex items-center justify-center transition cursor-pointer ${
                 viewMode === "list"
                   ? "bg-[#22c527] text-black shadow-sm"
