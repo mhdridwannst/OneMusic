@@ -26,6 +26,7 @@ import AuthModal from "@/components/AuthModal";
 import PlaylistPickerModal from "@/components/PlaylistPickerModal";
 import PlaylistLibrary from "@/components/PlaylistLibrary";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import MoodHub, { MOOD_VIBES, type MoodVibe } from "@/components/MoodHub";
 
 export default function Home() {
   // --- STATE ---
@@ -43,6 +44,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"default" | "title" | "artist">(
     "default",
   );
+  const [activeMoodId, setActiveMoodId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -197,7 +199,23 @@ export default function Home() {
         (song.genre && song.genre.toLowerCase().includes(term));
 
       let matchesTab = true;
-      if (activeTab === "Favorites") {
+
+      // Filter Mood Suasana
+      if (activeMoodId) {
+        const mood = MOOD_VIBES.find((v) => v.id === activeMoodId);
+        if (mood) {
+          matchesTab = mood.songIds.includes(song.id);
+        }
+      } else if (activeTab === "Teman Tidur") {
+        const sleepMood = MOOD_VIBES.find((v) => v.id === "sleep");
+        matchesTab = Boolean(sleepMood?.songIds.includes(song.id));
+      } else if (activeTab === "Fokus Belajar") {
+        const studyMood = MOOD_VIBES.find((v) => v.id === "study");
+        matchesTab = Boolean(studyMood?.songIds.includes(song.id));
+      } else if (activeTab === "Olahraga") {
+        const workoutMood = MOOD_VIBES.find((v) => v.id === "workout");
+        matchesTab = Boolean(workoutMood?.songIds.includes(song.id));
+      } else if (activeTab === "Favorites") {
         matchesTab = player.likedSongs.includes(song.id);
       } else if (activeTab === "My Playlist") {
         const selectedPlaylist = playlists.find(
@@ -278,6 +296,7 @@ export default function Home() {
     return filtered;
   }, [
     activeTab,
+    activeMoodId,
     sortBy,
     searchTerm,
     songs,
@@ -396,7 +415,31 @@ export default function Home() {
     triggerToast("Memutar acak lagu");
   };
 
+  const handlePlayMood = (vibe: MoodVibe, shuffle = true) => {
+    const moodSongs = vibe.songIds
+      .map((id) => songs.find((s) => s.id === id))
+      .filter((s): s is Song => Boolean(s));
+
+    if (moodSongs.length === 0) return;
+
+    player.setPlaylist(moodSongs);
+    if (shuffle) {
+      if (!player.isShuffle) player.toggleShuffle();
+      const randomIndex = Math.floor(Math.random() * moodSongs.length);
+      player.playSong(moodSongs[randomIndex]);
+    } else {
+      player.playSong(moodSongs[0]);
+    }
+    triggerToast(`Memutar suasana ${vibe.name} ✨`);
+  };
+
   // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
+  const sleepAmbientRow = useMemo(() => {
+    const sleepIds = [
+      56, 135, 136, 130, 4, 132, 138, 137, 128, 127, 134, 124, 123, 64, 65, 139, 140,
+    ];
+    return songs.filter((s) => sleepIds.includes(s.id));
+  }, [songs]);
   const trendingHits = useMemo(() => {
     const viralIds = [
       114, 125, 77, 73, 87, 72, 63, 74, 70, 95, 27, 28, 88, 78, 102, 110,
@@ -554,6 +597,18 @@ export default function Home() {
             />
           )}
 
+          {/* MOOD & VIBE HUB: TEMAN TIDUR, BELAJAR, SANTAI, OLAHRAGA, GALAU */}
+          {!searchTerm && activeTab === "All Songs" && songs.length > 0 && (
+            <MoodHub
+              songs={songs}
+              currentSong={player.currentSong}
+              isPlaying={player.isPlaying}
+              onPlayMood={handlePlayMood}
+              activeMoodId={activeMoodId}
+              onSelectMoodFilter={setActiveMoodId}
+            />
+          )}
+
           {/* Section Baru Saja Diputar (Recently Played) */}
           {!searchTerm &&
             activeTab === "All Songs" &&
@@ -579,6 +634,22 @@ export default function Home() {
           {/* CURATED HORIZONTAL SNAP ROWS (SPOTIFY STYLE) */}
           {!searchTerm && activeTab === "All Songs" && (
             <>
+              {/* Row 0: Teman Tidur & Ambient (Snowfall Vibes) */}
+              <SongRowSection
+                title="Teman Tidur & Snowfall Vibes"
+                subtitle="Musik sunyi, ambient menenangkan, dan lo-fi untuk tidur lelap"
+                icon="ri-moon-clear-fill"
+                songs={sleepAmbientRow}
+                currentSong={player.currentSong}
+                isPlaying={player.isPlaying}
+                likedSongs={player.likedSongs}
+                onPlay={player.playSong}
+                onToggleLike={handleToggleLikeSong}
+                playlistSongIds={playlistSongIds}
+                onTogglePlaylist={handleTogglePlaylist}
+                onViewAll={() => setActiveTab("Teman Tidur")}
+              />
+
               {/* Row 1: Viral & Trending */}
               <SongRowSection
                 title="Trending Music "
@@ -690,9 +761,11 @@ export default function Home() {
               <h2 className="text-xl md:text-2xl font-black tracking-tight text-white mt-1">
                 {searchTerm
                   ? `Menemukan ${displayedSongs.length} lagu`
-                  : activeTab === "All Songs"
-                    ? "Semua lagu untukmu"
-                    : activeTab}
+                  : activeMoodId
+                    ? `Suasana: ${MOOD_VIBES.find((v) => v.id === activeMoodId)?.name}`
+                    : activeTab === "All Songs"
+                      ? "Semua lagu untukmu"
+                      : activeTab}
               </h2>
             </div>
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white/50">

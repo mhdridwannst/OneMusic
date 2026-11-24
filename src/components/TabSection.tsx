@@ -16,6 +16,9 @@ interface TabSectionProps {
 
 export const CATEGORIES = [
   { id: "All Songs", label: "Semua Lagu", icon: "ri-music-fill" },
+  { id: "Teman Tidur", label: "🌙 Teman Tidur", icon: "ri-moon-clear-fill" },
+  { id: "Fokus Belajar", label: "📚 Fokus Belajar", icon: "ri-book-read-fill" },
+  { id: "Olahraga", label: "⚡ Olahraga", icon: "ri-flashlight-fill" },
   { id: "Favorites", label: "Favorit", icon: "ri-heart-3-fill" },
   { id: "My Playlist", label: "Playlist Saya", icon: "ri-play-list-2-fill" },
   { id: "Indie / Acoustic", label: "Indie / Acoustic", icon: "ri-headphone-fill" },

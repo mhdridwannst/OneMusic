@@ -33,6 +33,12 @@ const newAudioFiles = [
   "lana-del-rey-say-yes-to-heaven.mp3",
   "arijit-singh-channa-mereya.mp3",
   "arijit-singh-channa-mereya-slowed-lofi.mp3",
+  "oneheart-apathy.mp3",
+  "kina-can-we-kiss-forever.mp3",
+  "novo-amor-anchor.mp3",
+  "joji-glimpse-of-us.mp3",
+  "coldplay-sparks.mp3",
+  "xxxtentacion-jocelyn-flores.mp3",
 ];
 
 console.log(`Starting upload of ${newAudioFiles.length} new songs to bucket "${bucket}"...`);
