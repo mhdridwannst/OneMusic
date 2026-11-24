@@ -16,17 +16,15 @@ interface TabSectionProps {
 
 export const CATEGORIES = [
   { id: "All Songs", label: "Semua Lagu", icon: "ri-music-fill" },
-  { id: "Teman Tidur", label: "🌙 Teman Tidur", icon: "ri-moon-clear-fill" },
-  { id: "Fokus Belajar", label: "📚 Fokus Belajar", icon: "ri-book-read-fill" },
-  { id: "Olahraga", label: "⚡ Olahraga", icon: "ri-flashlight-fill" },
-  { id: "Favorites", label: "Favorit", icon: "ri-heart-3-fill" },
-  { id: "My Playlist", label: "Playlist Saya", icon: "ri-play-list-2-fill" },
-  { id: "Indie / Acoustic", label: "Indie / Acoustic", icon: "ri-headphone-fill" },
-  { id: "Pop", label: "Pop Hits", icon: "ri-fire-fill" },
-  { id: "R&B / Soul", label: "R&B / Soul", icon: "ri-sparkling-fill" },
-  { id: "Lo-Fi / Ambient", label: "Lo-Fi / Chill", icon: "ri-moon-clear-fill" },
-  { id: "Indonesian Hits", label: "Indo Pop", icon: "ri-flag-fill" },
-  { id: "K-Pop", label: "K-Pop", icon: "ri-disc-line" },
+  { id: "Fokus & Malam", label: "Fokus & Malam", icon: "ri-moon-clear-line" },
+  { id: "Santai", label: "Santai", icon: "ri-cup-line" },
+  { id: "Favorites", label: "Favorit", icon: "ri-heart-3-line" },
+  { id: "My Playlist", label: "Playlist Saya", icon: "ri-play-list-2-line" },
+  { id: "Pop", label: "Pop", icon: "ri-fire-line" },
+  { id: "Indie / Acoustic", label: "Indie", icon: "ri-headphone-line" },
+  { id: "Lo-Fi / Ambient", label: "Lo-Fi", icon: "ri-sound-module-line" },
+  { id: "Indonesian Hits", label: "Indo Pop", icon: "ri-disc-line" },
+  { id: "K-Pop", label: "K-Pop", icon: "ri-sparkling-line" },
   { id: "J-Pop", label: "J-Pop", icon: "ri-sparkling-2-line" },
 ];
 
