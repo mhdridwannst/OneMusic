@@ -115,11 +115,11 @@ export default function Header({
 
           {/* RIGHT ACTIONS */}
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Keyboard Shortcuts Trigger Button */}
+            {/* Keyboard Shortcuts Trigger Button (Desktop/Tablet Only) */}
             <button
               onClick={() => setIsShortcutOpen(true)}
               aria-label="Buka pintasan keyboard"
-              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
+              className="hidden sm:flex w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/10 items-center justify-center text-white/70 hover:text-white transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
               title="Keyboard Shortcuts (tekan '?')"
             >
               <i className="ri-keyboard-line text-base md:text-lg"></i>
@@ -145,13 +145,13 @@ export default function Header({
               </button>
             )}
 
-            {/* GitHub Repository */}
+            {/* GitHub Repository (Desktop/Tablet Only) */}
             <a
-              href="https://github.com/wannn-sion95/OneMusic.git"
+              href="https://github.com/mhdridwannst/OneMusic.git"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Buka repository OneMusic di GitHub"
-              className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-linear-to-tr from-[#22c527] to-cyan-500 p-0.5 cursor-pointer hover:scale-105 active:scale-95 transition shadow-lg shadow-[#22c527]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
+              className="hidden sm:flex w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-linear-to-tr from-[#22c527] to-cyan-500 p-0.5 cursor-pointer hover:scale-105 active:scale-95 transition shadow-lg shadow-[#22c527]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c527] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
               title="GitHub Repository"
             >
               <div className="w-full h-full rounded-[14px] bg-[#09090b] flex items-center justify-center overflow-hidden">
