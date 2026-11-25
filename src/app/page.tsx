@@ -199,8 +199,7 @@ export default function Home() {
 
       if (activeTab === "Fokus & Malam") {
         const sleepIds = [
-          56, 135, 136, 130, 4, 132, 138, 137, 128, 127, 134, 124, 123, 64, 65,
-          139, 140,
+          56, 130, 4, 132, 128, 127, 134, 124, 123, 64, 65, 14, 41, 129, 131,
         ];
         matchesTab = sleepIds.includes(song.id);
       } else if (activeTab === "Santai") {
@@ -410,7 +409,7 @@ export default function Home() {
   // --- CURATED COLLECTIONS UNTUK HORIZONTAL SNAP ROWS SPOTIFY ---
   const sleepAmbientRow = useMemo(() => {
     const sleepIds = [
-      56, 135, 136, 130, 4, 132, 138, 137, 128, 127, 134, 124, 123, 64, 65, 139, 140,
+      56, 130, 4, 132, 128, 127, 134, 124, 123, 64, 65, 14, 41, 129, 131,
     ];
     return songs.filter((s) => sleepIds.includes(s.id));
   }, [songs]);
